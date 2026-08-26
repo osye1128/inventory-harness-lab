@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
+    "verify": "npx tsc --noEmit && npm run lint && npm test && npm run build",
     "db:ensure": "tsx scripts/ensure-db.ts",
     "db:studio": "prisma studio",
     "db:migrate": "prisma migrate dev",
