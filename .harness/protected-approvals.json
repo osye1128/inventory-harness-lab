@@ -3,7 +3,7 @@
   "approvals": [
     {
       "path": "docs/harness/SSOT.md",
-      "sha256": "1e97f901d2a0ff986216e84cd9e0ea386775fd2a854e3abef0ddee2030af5c94",
+      "sha256": "7e8b5f7f6353fc98edfae719e6140af48ba2c13657fabeb84c630d7c04458d67",
       "approvedBy": "osye1128",
       "reason": "사람이 승인한 SSOT 및 보호 정책 변경"
     },
