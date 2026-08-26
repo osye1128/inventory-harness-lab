@@ -1,0 +1,12 @@
+# Protected SSOT, verification, and CI paths
+/docs/01-requirements.md @osye1128
+/docs/06-architecture.md @osye1128
+/docs/harness/SSOT.md @osye1128
+/.harness/protected-approvals.json @osye1128
+/.github/CODEOWNERS @osye1128
+/.github/workflows/verify.yml @osye1128
+/package.json @osye1128
+/scripts/check-architecture.ts @osye1128
+/scripts/check-protected.ts @osye1128
+/scripts/prepare-verify.ts @osye1128
+/scripts/verify.ts @osye1128

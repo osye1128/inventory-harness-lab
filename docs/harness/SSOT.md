@@ -8,15 +8,15 @@
 
 ## 2. SSOT 매트릭스
 
-| 영역       | 원본(SSOT)                                                                    | 현재 상태           | 원본이 결정하는 범위                                                               |
-| -------- | --------------------------------------------------------------------------- | --------------- | ------------------------------------------------------------------------- |
-| 재고 도메인   | [`docs/01-requirements.md`](../01-requirements.md)                          | 존재              | 재고 개념, 로트, 거점, FEFO/LEFO, 이동·사유·팝업·감사 규칙, 범위와 완료 기준                       |
-| 아키텍처     | [`docs/06-architecture.md`](../06-architecture.md)                          | 존재              | 기술 스택, 데이터 모델, 계층·트랜잭션 경계, 재고 변경 통로, 상태 흐름, 성능·동시성 결정                     |
-| 개별 작업    | 해당 [GitHub Issue](https://github.com/osye1128/inventory-harness-lab/issues) | 현재 등록된 Issue 없음 | 작업 목적, 범위, 수용 조건, 의존성, 상태와 구현·검증 결과                                       |
-| 보호 경로 검사 | [`scripts/check-protected.ts`](../../scripts/check-protected.ts)            | 구현됨             | 승인된 보호 경로 변경만 로컬·CI에서 통과                                                  |
-| 검증 규칙    | `scripts/verify/` (추후 생성 예정)                                                | 아직 없음           | 검증 규칙 스크립트의 원본 위치                                                         |
-| 검증 실행    | [`scripts/verify.ts`](../../scripts/verify.ts)                              | 구현됨             | Protected → Prepare → Types → Lint → Architecture Check → Test → Build 실행 |
-| 구현·검증 루프 | 추후 생성 예정                                                                    | 아직 없음           | 작업을 구현하고 검증하며 결과를 기록하는 표준 루프                                              |
+| 영역 | 원본(SSOT) | 현재 상태 | 원본이 결정하는 범위 |
+|---|---|---|---|
+| 재고 도메인 | [`docs/01-requirements.md`](../01-requirements.md) | 존재 | 재고 개념, 로트, 거점, FEFO/LEFO, 이동·사유·팝업·감사 규칙, 범위와 완료 기준 |
+| 아키텍처 | [`docs/06-architecture.md`](../06-architecture.md) | 존재 | 기술 스택, 데이터 모델, 계층·트랜잭션 경계, 재고 변경 통로, 상태 흐름, 성능·동시성 결정 |
+| 개별 작업 | 해당 [GitHub Issue](https://github.com/osye1128/inventory-harness-lab/issues) | 현재 등록된 Issue 없음 | 작업 목적, 범위, 수용 조건, 의존성, 상태와 구현·검증 결과 |
+| 보호 경로 검사 | [`scripts/check-protected.ts`](../../scripts/check-protected.ts) | 구현됨 | 승인된 보호 경로 변경만 로컬·CI에서 통과 |
+| 검증 규칙 | `scripts/verify/` (추후 생성 예정) | 아직 없음 | 검증 규칙 스크립트의 원본 위치 |
+| 검증 실행 | [`scripts/verify.ts`](../../scripts/verify.ts) | 구현됨 | Protected → Prepare → Types → Lint → Architecture Check → Test → Build 실행 |
+| 구현·검증 루프 | 추후 생성 예정 | 아직 없음 | 작업을 구현하고 검증하며 결과를 기록하는 표준 루프 |
 
 > **현재 원본이 없는 영역:** 검증 규칙과 구현·검증 루프는 아직 정의하지 않는다. 이 문서는 해당 규칙이나 루프를 미리 발명하지 않는다.
 
@@ -71,6 +71,10 @@ Harness 문서는 충돌을 임의로 해결하지 않는다. 사람의 판단�
 - 승인 파일은 사람이 명시적으로 갱신하며, AI가 승인자를 대신해 기록하지 않는다.
 - 로컬과 CI는 같은 승인 파일과 같은 검사 명령을 사용한다. CI에서는 `GITHUB_BASE_SHA` 또는 `GITHUB_BASE_REF`를 비교 기준으로 사용하고, 로컬에서는 `PROTECTED_BASE`를 지정할 수 있으며 기본값은 `HEAD`다.
 - 보호 경로 변경이 충돌하거나 승인의 의미가 불명확하면 승인 기록을 추측하지 않고 `NEEDS_HUMAN`으로 판단을 요청한다.
+- `.harness/protected-approvals.json`은 승인 메타데이터이므로 `scripts/check-protected.ts`의 보호 경로 목록에는 포함하지 않는다. 대신 [`.github/CODEOWNERS`](../../.github/CODEOWNERS)와 GitHub branch protection 또는 ruleset으로 사람의 review를 요구한다.
+- [`.github/CODEOWNERS`](../../.github/CODEOWNERS)는 보호 경로 및 승인 파일의 소유자로 `@osye1128`을 선언한다. CODEOWNERS 파일만으로는 병합이 차단되지 않으므로 GitHub 원격 설정에서 CODEOWNER review와 `Verify` required check를 별도로 활성화해야 한다.
+- GitHub Actions는 `contents: read` 권한으로 승인 파일을 읽기만 하며, 승인 기록을 생성·수정하지 않는다.
+- GitHub Actions workflow와 CODEOWNERS는 저장소에 선언되지만, branch protection 또는 ruleset의 원격 enforcement는 별도 GitHub 설정이다. 원격 설정이 적용되기 전 상태는 `정책 선언`으로 본다.
 
 ## 6. 개별 작업 참조 규칙
 
@@ -116,6 +120,7 @@ Harness 문서는 충돌을 임의로 해결하지 않는다. 사람의 판단�
 - 개별 작업: 해당 [GitHub Issue](https://github.com/osye1128/inventory-harness-lab/issues)
 - 보호 경로 승인: [`.harness/protected-approvals.json`](../../.harness/protected-approvals.json)
 - 보호 경로 검사: [`scripts/check-protected.ts`](../../scripts/check-protected.ts)
+- 보호 경로 소유자: [`.github/CODEOWNERS`](../../.github/CODEOWNERS)
 - 현재 부재: 검증 규칙, 구현·검증 루프
 
 이 문서는 위 원본을 대체하지 않으며, 원본이 변경되면 링크와 상태를 필요한 범위에서만 갱신한다.
