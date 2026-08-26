@@ -45,7 +45,8 @@ function changedPaths(base: string): string[] {
 function digest(relativePath: string): string {
   const absolutePath = path.join(repository, relativePath)
   if (!existsSync(absolutePath)) return 'DELETED'
-  return createHash('sha256').update(readFileSync(absolutePath)).digest('hex')
+  const normalized = readFileSync(absolutePath, 'utf8').replace(/\r\n?/g, '\n')
+  return createHash('sha256').update(normalized, 'utf8').digest('hex')
 }
 
 type Approval = { path: string; sha256: string; approvedBy: string; reason?: string }

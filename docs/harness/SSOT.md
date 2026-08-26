@@ -67,7 +67,7 @@ Harness 문서는 충돌을 임의로 해결하지 않는다. 사람의 판단�
 
 - 보호 경로 변경은 [`scripts/check-protected.ts`](../../scripts/check-protected.ts)가 로컬과 CI에서 검사한다.
 - 사람이 승인할 때는 [`.harness/protected-approvals.json`](../../.harness/protected-approvals.json)의 `approvals` 배열에 변경된 경로의 현재 `sha256`, `approvedBy`, `reason`을 기록한다.
-- 검사기는 현재 변경 경로와 파일의 SHA-256 및 승인 기록을 대조한다. 승인 기록이 없거나 값이 다르면 `PROTECTED_CHANGE_NEEDS_HUMAN` 상태로 실패한다.
+- 검사기는 현재 변경 경로와 파일의 LF 정규화된 UTF-8 내용에 대한 SHA-256 및 승인 기록을 대조한다. 승인 기록이 없거나 값이 다르면 `PROTECTED_CHANGE_NEEDS_HUMAN` 상태로 실패한다.
 - 승인 파일은 사람이 명시적으로 갱신하며, AI가 승인자를 대신해 기록하지 않는다.
 - 로컬과 CI는 같은 승인 파일과 같은 검사 명령을 사용한다. CI에서는 `GITHUB_BASE_SHA` 또는 `GITHUB_BASE_REF`를 비교 기준으로 사용하고, 로컬에서는 `PROTECTED_BASE`를 지정할 수 있으며 기본값은 `HEAD`다.
 - 보호 경로 변경이 충돌하거나 승인의 의미가 불명확하면 승인 기록을 추측하지 않고 `NEEDS_HUMAN`으로 판단을 요청한다.

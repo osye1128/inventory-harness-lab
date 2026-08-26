@@ -3,7 +3,7 @@
   "approvals": [
     {
       "path": "docs/harness/SSOT.md",
-      "sha256": "5b9f13d5ecff90e5f5fd98c44c04c4ba3a5eaf610ee6c1db099a332c39b66da6",
+      "sha256": "1e97f901d2a0ff986216e84cd9e0ea386775fd2a854e3abef0ddee2030af5c94",
       "approvedBy": "osye1128",
       "reason": "사람이 승인한 SSOT 및 보호 정책 변경"
     },
@@ -21,7 +21,7 @@
     },
     {
       "path": "scripts/check-protected.ts",
-      "sha256": "b3e419107fd690b7a5f791face29d2931f59950a7cb2db82fc2bc09a264e0428",
+      "sha256": "5c2defe5ab9aeb4f651e07343bbbf57307f6b20ae62764d4e25d366a9f0ca27b",
       "approvedBy": "osye1128",
       "reason": "사람이 승인한 Protected 검사 변경"
     },
