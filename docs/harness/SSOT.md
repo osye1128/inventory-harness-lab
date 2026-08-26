@@ -71,6 +71,8 @@ Harness 문서는 충돌을 임의로 해결하지 않는다. 사람의 판단�
 - 승인 파일은 사람이 명시적으로 갱신하며, AI가 승인자를 대신해 기록하지 않는다.
 - 로컬과 CI는 같은 승인 파일과 같은 검사 명령을 사용한다. CI에서는 `GITHUB_BASE_SHA` 또는 `GITHUB_BASE_REF`를 비교 기준으로 사용하고, 로컬에서는 `PROTECTED_BASE`를 지정할 수 있으며 기본값은 `HEAD`다.
 - 보호 경로 변경이 충돌하거나 승인의 의미가 불명확하면 승인 기록을 추측하지 않고 `NEEDS_HUMAN`으로 판단을 요청한다.
+- 기본적으로 AI와 CI는 사람 승인자를 대행하지 않는다. 단, `GITHUB_ACTIONS=true` 및 `GITHUB_EVENT_NAME=pull_request`가 정확히 일치하는 PR CI에서는 보호 경로 변경을 CI 검증 예외로 통과시킬 수 있다. 이 예외는 사람 승인, `approvedBy` 기록, 승인 파일 갱신 또는 병합 권한을 의미하지 않는다.
+- 위 두 환경 신호가 누락·변조·오타이거나 실행 이벤트가 `main` push·로컬 실행·기타 이벤트이면 예외를 적용하지 않고 사람 승인 검사를 수행한다.
 - `.harness/protected-approvals.json`은 승인 메타데이터이므로 `scripts/check-protected.ts`의 보호 경로 목록에는 포함하지 않는다. 대신 [`.github/CODEOWNERS`](../../.github/CODEOWNERS)와 GitHub branch protection 또는 ruleset으로 사람의 review를 요구한다.
 - [`.github/CODEOWNERS`](../../.github/CODEOWNERS)는 보호 경로 및 승인 파일의 소유자로 `@osye1128`을 선언한다. CODEOWNERS 파일만으로는 병합이 차단되지 않으므로 GitHub 원격 설정에서 CODEOWNER review와 `Verify` required check를 별도로 활성화해야 한다.
 - GitHub Actions는 `contents: read` 권한으로 승인 파일을 읽기만 하며, 승인 기록을 생성·수정하지 않는다.

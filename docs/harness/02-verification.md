@@ -70,7 +70,7 @@ CI에서는 [`../.github/workflows/verify.yml`](../../.github/workflows/verify.y
 3. `GITHUB_BASE_REF`
 4. 로컬 기본값 `HEAD`
 
-보호 경로 충돌이나 승인 의미가 불명확한 경우에는 [`SSOT.md`](./SSOT.md)의 `NEEDS_HUMAN` 정책을 따른다. AI나 CI가 승인 기록을 생성하지 않는다.
+보호 경로 충돌이나 승인 의미가 불명확한 경우에는 [`SSOT.md`](./SSOT.md)의 `NEEDS_HUMAN` 정책을 따른다. 기본적으로 AI나 CI가 승인 기록을 생성하지 않는다. 단, `GITHUB_ACTIONS=true`와 `GITHUB_EVENT_NAME=pull_request`가 정확히 일치하는 PR CI에서는 `PR_CI_PROTECTED_CHECK_EXCEPTION`으로 보호 경로 변경을 검증 예외 처리할 수 있다. 이 예외는 사람 승인이나 승인 기록을 대체하지 않는다.
 
 ### 4.2 Prepare
 
@@ -182,7 +182,7 @@ checkout(fetch-depth: 0)
   → npm run verify
 ```
 
-PR에서는 PR base SHA를 Protected 비교 기준으로 사용하고, `main` push에서는 직전 커밋을 기준으로 사용한다. workflow는 `contents: read` 권한만 가지며 승인 파일이나 저장소 내용을 수정하지 않는다.
+PR에서는 PR base SHA를 Protected 비교 기준으로 사용하고, `main` push에서는 직전 커밋을 기준으로 사용한다. `GITHUB_ACTIONS=true` 및 `GITHUB_EVENT_NAME=pull_request`가 정확히 일치하는 PR CI에서는 `PR_CI_PROTECTED_CHECK_EXCEPTION`이 적용될 수 있지만, 이는 사람 승인이나 승인 파일 갱신을 대체하지 않는다. workflow는 `contents: read` 권한만 가지며 승인 파일이나 저장소 내용을 수정하지 않는다.
 
 ## 7. 실패 처리
 
@@ -203,6 +203,8 @@ PR에서는 PR base SHA를 Protected 비교 기준으로 사용하고, `main` pu
 - `scripts/verify/`에 둘 독립적인 검증 규칙 체계
 - 표준화된 구현·검증 루프
 - 자동 승인 또는 승인자 대행 절차
+
+단, PR CI에서는 위 정책의 실행 예외가 적용될 수 있다. `GITHUB_ACTIONS=true`와 `GITHUB_EVENT_NAME=pull_request`가 모두 정확히 일치할 때만 보호 경로 변경을 CI 검증 예외로 통과시키며, 사람 review·CODEOWNERS·branch protection을 우회하거나 승인자를 대행하지 않는다. 로컬과 `main` push에서는 사람 승인 정책을 유지한다.
 
 `docs/07-plan.md`의 기존 QA 체크리스트와 `docs/06-architecture.md`의 자동 테스트 불변식은 각각의 원본 문서 내용이며, 이 문서가 새로운 검증 규칙으로 승격하지 않는다.
 
