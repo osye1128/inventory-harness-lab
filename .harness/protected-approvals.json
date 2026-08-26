@@ -9,7 +9,7 @@
     },
     {
       "path": "package.json",
-      "sha256": "63e48e55b681f939f291696ebbb88f101058837b512be5850d2ff76cd418507c",
+      "sha256": "3526f296cb75e5f2a1d2dca500cf887ecd43f45c5adfbaa18fd8a8fc6ff26319",
       "approvedBy": "osye1128",
       "reason": "사람이 승인한 검증 명령 변경"
     },
