@@ -14,11 +14,11 @@
 | 아키텍처 | [`docs/06-architecture.md`](../06-architecture.md) | 존재 | 기술 스택, 데이터 모델, 계층·트랜잭션 경계, 재고 변경 통로, 상태 흐름, 성능·동시성 결정 |
 | 개별 작업 | 해당 [GitHub Issue](https://github.com/osye1128/inventory-harness-lab/issues) | 현재 등록된 Issue 없음 | 작업 목적, 범위, 수용 조건, 의존성, 상태와 구현·검증 결과 |
 | 보호 경로 검사 | [`scripts/check-protected.ts`](../../scripts/check-protected.ts) | 구현됨 | 승인된 보호 경로 변경만 로컬·CI에서 통과 |
-| 검증 규칙 | `scripts/verify/` (추후 생성 예정) | 아직 없음 | 검증 규칙 스크립트의 원본 위치 |
+| 검증 규칙 | [`02-verification.md`](./02-verification.md) | 구현됨 | 현재 하네스의 검증 절차와 단계별 규칙 |
 | 검증 실행 | [`scripts/verify.ts`](../../scripts/verify.ts) | 구현됨 | Protected → Prepare → Types → Lint → Architecture Check → Test → Build 실행 |
 | 구현·검증 루프 | 추후 생성 예정 | 아직 없음 | 작업을 구현하고 검증하며 결과를 기록하는 표준 루프 |
 
-> **현재 원본이 없는 영역:** 검증 규칙과 구현·검증 루프는 아직 정의하지 않는다. 이 문서는 해당 규칙이나 루프를 미리 발명하지 않는다.
+> **현재 원본이 없는 영역:** 구현·검증 루프는 아직 정의하지 않는다. 검증 절차의 원본은 [`02-verification.md`](./02-verification.md)이며, 이 문서는 해당 절차를 대체하지 않는다.
 
 ## 3. 문서 간 책임 경계
 
@@ -88,12 +88,12 @@ Harness 문서는 충돌을 임의로 해결하지 않는다. 사람의 판단�
 
 ### 검증 규칙
 
-- 상태: `추후 생성 예정`
-- 목적: 도메인 및 아키텍처 기준과 개별 Issue의 수용 조건을 기계적으로 검사할 규칙을 정의한다.
-- 구현 방식: 추후 스크립트로 대체 예정
-- 현재 미정: 규칙 ID, 입력 형식, 스크립트 위치, 실행 시점, 실패 결과 형식
+- 상태: `정의됨`
+- 원본: [`02-verification.md`](./02-verification.md)
+- 실행 진입점: [`scripts/verify.ts`](../../scripts/verify.ts)
+- 구현 방식: 현재 하네스의 검증 절차를 문서로 정의하고 `npm run verify`로 실행한다.
 
-현재는 [`docs/01-requirements.md`](../01-requirements.md)의 완료 기준과 [`docs/06-architecture.md`](../06-architecture.md)의 자동 테스트 불변식을 참조할 수 있지만, 이를 새로운 Harness 검증 규칙으로 승격하지 않는다.
+도메인 완료 기준과 아키텍처 불변식은 각각 [`docs/01-requirements.md`](../01-requirements.md)와 [`docs/06-architecture.md`](../06-architecture.md)를 참조하며, 검증 실행 절차와 단계별 규칙은 [`02-verification.md`](./02-verification.md)가 원본이다.
 
 ### 구현·검증 루프
 
