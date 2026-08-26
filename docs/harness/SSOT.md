@@ -8,13 +8,15 @@
 
 ## 2. SSOT 매트릭스
 
-| 영역       | 원본(SSOT)                                                                    | 현재 상태           | 원본이 결정하는 범위                                           |
-| -------- | --------------------------------------------------------------------------- | --------------- | ----------------------------------------------------- |
-| 재고 도메인   | [`docs/01-requirements.md`](../01-requirements.md)                          | 존재              | 재고 개념, 로트, 거점, FEFO/LEFO, 이동·사유·팝업·감사 규칙, 범위와 완료 기준   |
-| 아키텍처     | [`docs/06-architecture.md`](../06-architecture.md)                          | 존재              | 기술 스택, 데이터 모델, 계층·트랜잭션 경계, 재고 변경 통로, 상태 흐름, 성능·동시성 결정 |
-| 개별 작업    | 해당 [GitHub Issue](https://github.com/osye1128/inventory-harness-lab/issues) | 현재 등록된 Issue 없음 | 작업 목적, 범위, 수용 조건, 의존성, 상태와 구현·검증 결과                   |
-| 검증 규칙    | 추후 생성 예정                                                                    | 아직 없음           | 스크립트로 대체될 검증 규칙과 실행 기준                                |
-| 구현·검증 루프 | 추후 생성 예정                                                                    | 아직 없음           | 작업을 구현하고 검증하며 결과를 기록하는 표준 루프                          |
+| 영역       | 원본(SSOT)                                                                    | 현재 상태           | 원본이 결정하는 범위                                                               |
+| -------- | --------------------------------------------------------------------------- | --------------- | ------------------------------------------------------------------------- |
+| 재고 도메인   | [`docs/01-requirements.md`](../01-requirements.md)                          | 존재              | 재고 개념, 로트, 거점, FEFO/LEFO, 이동·사유·팝업·감사 규칙, 범위와 완료 기준                       |
+| 아키텍처     | [`docs/06-architecture.md`](../06-architecture.md)                          | 존재              | 기술 스택, 데이터 모델, 계층·트랜잭션 경계, 재고 변경 통로, 상태 흐름, 성능·동시성 결정                     |
+| 개별 작업    | 해당 [GitHub Issue](https://github.com/osye1128/inventory-harness-lab/issues) | 현재 등록된 Issue 없음 | 작업 목적, 범위, 수용 조건, 의존성, 상태와 구현·검증 결과                                       |
+| 보호 경로 검사 | [`scripts/check-protected.ts`](../../scripts/check-protected.ts)            | 구현됨             | 승인된 보호 경로 변경만 로컬·CI에서 통과                                                  |
+| 검증 규칙    | `scripts/verify/` (추후 생성 예정)                                                | 아직 없음           | 검증 규칙 스크립트의 원본 위치                                                         |
+| 검증 실행    | [`scripts/verify.ts`](../../scripts/verify.ts)                              | 구현됨             | Protected → Prepare → Types → Lint → Architecture Check → Test → Build 실행 |
+| 구현·검증 루프 | 추후 생성 예정                                                                    | 아직 없음           | 작업을 구현하고 검증하며 결과를 기록하는 표준 루프                                              |
 
 > **현재 원본이 없는 영역:** 검증 규칙과 구현·검증 루프는 아직 정의하지 않는다. 이 문서는 해당 규칙이나 루프를 미리 발명하지 않는다.
 
@@ -46,7 +48,31 @@
 
 Harness 문서는 충돌을 임의로 해결하지 않는다. 사람의 판단으로 원본이 변경되면 관련 GitHub Issue로 변경을 추적하고, 이 문서의 링크와 상태를 필요한 범위에서 갱신한다.
 
-## 5. 개별 작업 참조 규칙
+## 5. 보호 경로 변경 승인
+
+### 보호 경로
+
+다음 경로는 도메인·아키텍처·검증 실행의 기준을 담으므로 보호한다.
+
+- `docs/01-requirements.md`
+- `docs/06-architecture.md`
+- `docs/harness/SSOT.md`
+- `package.json`의 검증 관련 scripts
+- `scripts/check-architecture.ts`
+- `scripts/check-protected.ts`
+- `scripts/prepare-verify.ts`
+- `scripts/verify.ts`
+
+### 승인 방법
+
+- 보호 경로 변경은 [`scripts/check-protected.ts`](../../scripts/check-protected.ts)가 로컬과 CI에서 검사한다.
+- 사람이 승인할 때는 [`.harness/protected-approvals.json`](../../.harness/protected-approvals.json)의 `approvals` 배열에 변경된 경로의 현재 `sha256`, `approvedBy`, `reason`을 기록한다.
+- 검사기는 현재 변경 경로와 파일의 SHA-256 및 승인 기록을 대조한다. 승인 기록이 없거나 값이 다르면 `PROTECTED_CHANGE_NEEDS_HUMAN` 상태로 실패한다.
+- 승인 파일은 사람이 명시적으로 갱신하며, AI가 승인자를 대신해 기록하지 않는다.
+- 로컬과 CI는 같은 승인 파일과 같은 검사 명령을 사용한다. CI에서는 `GITHUB_BASE_SHA` 또는 `GITHUB_BASE_REF`를 비교 기준으로 사용하고, 로컬에서는 `PROTECTED_BASE`를 지정할 수 있으며 기본값은 `HEAD`다.
+- 보호 경로 변경이 충돌하거나 승인의 의미가 불명확하면 승인 기록을 추측하지 않고 `NEEDS_HUMAN`으로 판단을 요청한다.
+
+## 6. 개별 작업 참조 규칙
 
 - 작업은 먼저 GitHub Issue로 등록한다.
 - 문서나 변경 설명에는 Issue 번호와 정식 URL을 함께 사용한다.
@@ -54,7 +80,7 @@ Harness 문서는 충돌을 임의로 해결하지 않는다. 사람의 판단�
 - Pull Request는 구현 결과를 전달하는 수단이며, 개별 작업의 원본인 Issue를 대체하지 않는다.
 - 현재 저장소에는 등록된 Issue가 없으므로 이 문서에 임의의 작업·번호·제목을 추가하지 않는다.
 
-## 6. 추후 생성 항목
+## 7. 추후 생성 항목
 
 ### 검증 규칙
 
@@ -73,7 +99,7 @@ Harness 문서는 충돌을 임의로 해결하지 않는다. 사람의 판단�
 
 검증 규칙이 정의되고 개별 작업 Issue가 축적된 뒤 별도 문서로 생성한다.
 
-## 7. 갱신 규칙
+## 8. 갱신 규칙
 
 - 도메인 원본이 바뀌면 이 문서의 링크와 상태만 필요한 범위에서 갱신한다.
 - 아키텍처 원본이 바뀌면 이 문서의 링크와 상태만 필요한 범위에서 갱신한다.
@@ -81,13 +107,15 @@ Harness 문서는 충돌을 임의로 해결하지 않는다. 사람의 판단�
 - 검증 규칙과 구현·검증 루프가 실제로 생성될 때 각각의 원본·상태·책임 범위를 이 문서에 추가한다.
 - 이 디렉터리의 문서 변경은 코드·DB 변경과 별도로 검토한다.
 
-## 8. 참고
+## 9. 참고
 
 재고 도메인과 아키텍처의 책임 경계는 위의 `## 3. 문서 간 책임 경계`를, 충돌 처리 정책은 위의 `## 4. 충돌 처리`를 따른다.
 
 - 재고 도메인: [`docs/01-requirements.md`](../01-requirements.md)
 - 아키텍처: [`docs/06-architecture.md`](../06-architecture.md)
 - 개별 작업: 해당 [GitHub Issue](https://github.com/osye1128/inventory-harness-lab/issues)
+- 보호 경로 승인: [`.harness/protected-approvals.json`](../../.harness/protected-approvals.json)
+- 보호 경로 검사: [`scripts/check-protected.ts`](../../scripts/check-protected.ts)
 - 현재 부재: 검증 규칙, 구현·검증 루프
 
 이 문서는 위 원본을 대체하지 않으며, 원본이 변경되면 링크와 상태를 필요한 범위에서만 갱신한다.
