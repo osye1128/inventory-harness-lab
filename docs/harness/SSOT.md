@@ -12,7 +12,7 @@
 |---|---|---|---|
 | 재고 도메인 | [`docs/01-requirements.md`](../01-requirements.md) | 존재 | 재고 개념, 로트, 거점, FEFO/LEFO, 이동·사유·팝업·감사 규칙, 범위와 완료 기준 |
 | 아키텍처 | [`docs/06-architecture.md`](../06-architecture.md) | 존재 | 기술 스택, 데이터 모델, 계층·트랜잭션 경계, 재고 변경 통로, 상태 흐름, 성능·동시성 결정 |
-| 개별 작업 | 해당 [GitHub Issue](https://github.com/osye1128/inventory-harness-lab/issues) | 현재 등록된 Issue 없음 | 작업 목적, 범위, 수용 조건, 의존성, 상태와 구현·검증 결과 |
+| 개별 작업 | 해당 [GitHub Issue](https://github.com/osye1128/inventory-harness-lab/issues) 및 [`maintenance.yml`](../../.github/ISSUE_TEMPLATE/maintenance.yml) | 현재 등록된 Issue 없음 | 작업 목적, 범위, 수용 조건, 의존성, 상태와 구현·검증 결과 |
 | 보호 경로 검사 | [`scripts/check-protected.ts`](../../scripts/check-protected.ts) | 구현됨 | 승인된 보호 경로 변경만 로컬·CI에서 통과 |
 | 검증 규칙 | [`02-verification.md`](./02-verification.md) | 구현됨 | 현재 하네스의 검증 절차와 단계별 규칙 |
 | 검증 실행 | [`scripts/verify.ts`](../../scripts/verify.ts) | 구현됨 | Protected → Prepare → Types → Lint → Architecture Check → Test → Build 실행 |
@@ -25,6 +25,8 @@
 - 재고 도메인에 대한 결정은 [`docs/01-requirements.md`](../01-requirements.md)에서 한다.
 - 아키텍처에 대한 결정은 [`docs/06-architecture.md`](../06-architecture.md)에서 한다.
 - 개별 작업의 정의와 수용 조건은 해당 GitHub Issue에서 한다. Issue가 없는 작업은 원본이 없는 상태로 남긴다.
+- 유지보수 Issue는 [`.github/ISSUE_TEMPLATE/maintenance.yml`](../../.github/ISSUE_TEMPLATE/maintenance.yml)의 6개 항목을 따른다. 종료 조건은 기준·수치·기대 결과로 참·거짓을 판정할 수 있게 작성하고, 구현 루프 최대 횟수의 기본값은 3회다.
+- Issue의 종료 조건을 검증하는 테스트는 `tests/issues/issue-{Issue 번호}-{기능명}.test.ts` 규칙을 따른다. 테스트가 종료 조건을 모두 검증하지 않거나 실패하면 완료로 보지 않는다.
 - `docs/harness` 문서는 원본의 위치와 관계만 안내한다. 도메인 규칙, 아키텍처 결정, 작업 목록, 검증 규칙을 별도로 복제하지 않는다.
 - 기존 [`docs/07-plan.md`](../07-plan.md)의 계획·QA 내용은 해당 문서의 범위에 머문다. 아직 생성되지 않은 Harness 검증 규칙이나 구현·검증 루프로 간주하지 않는다.
 
