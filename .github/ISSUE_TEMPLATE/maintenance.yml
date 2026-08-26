@@ -1,0 +1,91 @@
+name: 유지보수 작업
+description: 기존 기능의 수정·개선·문서화 작업을 등록합니다.
+title: "[유지보수] "
+labels:
+  - maintenance
+body:
+  - type: markdown
+    attributes:
+      value: |
+        유지보수 작업은 아래 6개 항목을 구체적으로 작성해 주세요.
+        SSOT 또는 Issue와 충돌하는 내용이 있으면 `NEEDS_HUMAN` 상태로 선언하고 사람의 판단을 요청합니다.
+
+  - type: textarea
+    id: background
+    attributes:
+      label: 1. 배경
+      description: 왜 이 작업이 필요한가요?
+      placeholder: 현재 문제와 작업이 필요한 이유를 작성해 주세요.
+    validations:
+      required: true
+
+  - type: textarea
+    id: change
+    attributes:
+      label: 2. 변경할 내용
+      description: 무엇을 수정하나요? 변경 대상과 범위를 구체적으로 작성해 주세요.
+      placeholder: 수정할 파일, 기능, 문서 또는 동작을 작성해 주세요.
+    validations:
+      required: true
+
+  - type: textarea
+    id: completion-criteria
+    attributes:
+      label: 3. 종료 조건
+      description: 무엇이 참이면 이 작업을 완료로 판단하나요?
+      placeholder: |
+        - [ ] 완료 조건 1
+        - [ ] 완료 조건 2
+    validations:
+      required: true
+
+  - type: textarea
+    id: machine-verification
+    attributes:
+      label: 4. 기계 검증
+      description: 어떤 테스트·검사 명령이 완료 여부를 판정하나요?
+      placeholder: |
+        예: npm run verify
+        기대 결과와 필요한 추가 검증을 함께 작성해 주세요.
+    validations:
+      required: true
+
+  - type: textarea
+    id: boundaries
+    attributes:
+      label: 5. 건드리면 안 되는 것
+      description: 변경하면 안 되는 파일, 기능, 데이터 또는 정책 경계를 작성해 주세요.
+      placeholder: 변경 금지 대상을 작성해 주세요. 없으면 없다고 명시해 주세요.
+    validations:
+      required: true
+
+  - type: input
+    id: max-implementation-loops
+    attributes:
+      label: 6. 구현 루프 최대 횟수
+      description: 재시도 또는 구현·검증 반복을 몇 회까지 허용하나요? 양의 정수를 입력해 주세요.
+      placeholder: "예: 3"
+    validations:
+      required: true
+      pattern: "^[1-9][0-9]*$"
+
+  - type: input
+    id: domain-source
+    attributes:
+      label: 재고 도메인 원본
+      description: 관련 시 [`docs/01-requirements.md`](../../docs/01-requirements.md)를 참조하세요.
+      placeholder: 관련 섹션 또는 링크 (선택)
+
+  - type: input
+    id: architecture-source
+    attributes:
+      label: 아키텍처 원본
+      description: 관련 시 [`docs/06-architecture.md`](../../docs/06-architecture.md)를 참조하세요.
+      placeholder: 관련 섹션 또는 링크 (선택)
+
+  - type: input
+    id: related-issue
+    attributes:
+      label: 관련 Issue 또는 원본
+      description: 이 Issue 자체가 작업 원본입니다. 의존 작업이 있으면 Issue 번호나 URL을 적어 주세요.
+      placeholder: "#123 또는 https://github.com/osye1128/inventory-harness-lab/issues/123"
