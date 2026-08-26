@@ -1,4 +1,41 @@
 {
   "version": 1,
-  "approvals": []
+  "approvals": [
+    {
+      "path": "docs/harness/SSOT.md",
+      "sha256": "5b9f13d5ecff90e5f5fd98c44c04c4ba3a5eaf610ee6c1db099a332c39b66da6",
+      "approvedBy": "osye1128",
+      "reason": "사람이 승인한 SSOT 및 보호 정책 변경"
+    },
+    {
+      "path": "package.json",
+      "sha256": "63e48e55b681f939f291696ebbb88f101058837b512be5850d2ff76cd418507c",
+      "approvedBy": "osye1128",
+      "reason": "사람이 승인한 검증 명령 변경"
+    },
+    {
+      "path": "scripts/check-architecture.ts",
+      "sha256": "d08a322eddb2ee9a927d06af97f62a6d9f9a8243d41fceb01ac07f9fa5a9ef03",
+      "approvedBy": "osye1128",
+      "reason": "사람이 승인한 Architecture Check 변경"
+    },
+    {
+      "path": "scripts/check-protected.ts",
+      "sha256": "b3e419107fd690b7a5f791face29d2931f59950a7cb2db82fc2bc09a264e0428",
+      "approvedBy": "osye1128",
+      "reason": "사람이 승인한 Protected 검사 변경"
+    },
+    {
+      "path": "scripts/prepare-verify.ts",
+      "sha256": "938190b9c340243569aa4f9ab03e537881ffdb305389a5d4bca1f4315a8f80b7",
+      "approvedBy": "osye1128",
+      "reason": "사람이 승인한 검증 Prepare 변경"
+    },
+    {
+      "path": "scripts/verify.ts",
+      "sha256": "a16faa80bf7ab9fe4647db0e148b6a29d2f00a25f5e47b9adb58c242fc3ad90a",
+      "approvedBy": "osye1128",
+      "reason": "사람이 승인한 전체 검증 흐름 변경"
+    }
+  ]
 }
