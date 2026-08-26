@@ -204,17 +204,33 @@ PR에서는 PR base SHA를 Protected 비교 기준으로 사용하고, `main` pu
 2. Issue의 종료 조건마다 실행 조건·판정 기준·기대 결과가 있는지 확인한다. 기준이 추상적이거나 서로 충돌하면 구현을 시작하지 않고 `NEEDS_HUMAN`으로 판단을 요청한다.
 3. Issue 번호와 기능명을 사용해 종료 조건을 검증하는 테스트를 다음 경로에 둔다.
 
+   Issue 번호와 기능명은 반드시 실제 GitHub Issue의 값과 일치해야 한다. Issue가 아직 없거나 번호를 특정할 수 없으면 테스트 파일을 임의로 만들지 않고 사람에게 Issue 등록 또는 번호 확인을 요청한다.
+
+   테스트 파일 경로는 영문 소문자·숫자·하이픈으로 구성한다. 예를 들어 Issue #42의 “재고 이동” 기능은 `stock-transfer`로 변환한다.
+
+   테스트 파일명은 다음 정규식 형식을 따른다.
+
    ```text
-   tests/issues/issue-{Issue 번호}-{기능명}.test.ts
+   ^tests/issues/issue-[1-9][0-9]*-[a-z0-9]+(?:-[a-z0-9]+)*\\.test\\.ts$
    ```
+
+   Issue 번호와 기능명이 파일명에 없거나, 다른 Issue의 번호를 사용하거나, 기능명을 식별할 수 없는 파일명은 유효한 Issue 테스트로 보지 않는다.
 
 4. Issue 테스트는 각 종료 조건을 하나 이상의 명시적인 assertion으로 검증한다. 테스트 이름이나 주석만으로 종료 조건을 덮었다고 간주하지 않는다.
 5. Issue에 적힌 기계 검증 명령을 실행하고 종료 코드·테스트 결과·핵심 수치를 Issue에 기록한다.
 6. 모든 종료 조건과 기계 검증이 통과했을 때만 Issue를 완료 후보로 본다. 검증 결과가 없거나 일부 조건만 통과한 상태는 완료로 표시하지 않는다.
 
-### Issue 테스트 예시
+### Issue 테스트 파일 규칙
 
-Issue `#42`의 재고 이동 종료 조건을 검증하는 파일 예시는 다음과 같다.
+- 파일 하나는 하나의 GitHub Issue와 하나의 기능을 대상으로 한다.
+- 파일명은 `issue-{Issue 번호}-{기능명}.test.ts` 형식이어야 한다.
+- 기능명은 공백·한글·특수문자 대신 영문 소문자 케밥 케이스를 사용한다.
+- 예: Issue `#42`의 재고 이동 → `tests/issues/issue-42-stock-transfer.test.ts`
+- Issue 본문에 기재한 종료 조건과 테스트의 `it`/`test` assertion을 일대일로 추적할 수 있어야 한다.
+- Vitest의 `tests/**/*.test.ts` 포함 패턴에 따라 `npm test`에서 자동 실행된다.
+- 파일이 없거나, 파일명이 Issue와 불일치하거나, 종료 조건을 모두 검증하지 않으면 기계 검증 완료로 보지 않는다.
+
+### Issue 테스트 파일 구조 예시
 
 ```text
 tests/issues/issue-42-stock-transfer.test.ts
@@ -222,57 +238,31 @@ tests/issues/issue-42-stock-transfer.test.ts
 
 ```ts
 describe('Issue #42: 재고 이동', () => {
-  it('종료 조건: 이동 후 출발지·도착지 수량과 총량이 기대값과 일치한다', async () => {
+  it('종료 조건 1: 출발지 수량이 10개 감소한다', async () => {
     // 실행 조건을 설정한다.
-    // expect(...)로 기준과 기대 결과를 판정한다.
+    // expect(actual).toBe(기대값)
+  })
+
+  it('종료 조건 2: 도착지 수량이 10개 증가한다', async () => {
+    // expect(actual).toBe(기대값)
   })
 })
 ```
 
-위 예시는 파일명과 테스트 구조를 보여주기 위한 형식이며, 실제 Issue의 도메인 규칙과 수치를 임의로 대신하지 않는다.
+### Issue 테스트 미충족 시
 
-### 결과 및 중단 처리
+Issue 번호가 없거나 테스트 파일이 없으면 `NEEDS_HUMAN`으로 처리한다. 테스트 파일이 있어도 종료 조건 중 하나라도 assertion으로 검증하지 못하면 해당 Issue는 완료할 수 없다.
 
-- Issue 테스트가 실패하면 실패한 종료 조건, 실제 결과, 실행 명령을 Issue에 기록하고 수정 후 다시 검증한다.
-- Issue에 정한 구현 루프 최대 횟수에 도달할 때까지 검증이 통과하지 않으면 AI는 반복·추가 수정·횟수 초과 재시도를 하지 않는다.
-- 상한에 도달하면 `NEEDS_HUMAN` 상태를 선언하고, 실제 시도 횟수·마지막 실패 결과·남은 쟁점·사람에게 필요한 판단을 Issue에 전달한다.
-- SSOT와 Issue가 충돌하거나 종료 조건의 해석이 둘 이상 가능하면 AI는 자신의 판단으로 진행하지 않고 `NEEDS_HUMAN` 상태로 멈춘다.
-- PR CI의 `PR_CI_PROTECTED_CHECK_EXCEPTION`은 보호 경로 검증 예외일 뿐이며 Issue의 종료 조건 통과나 사람의 작업 승인을 의미하지 않는다.
+### Issue 테스트 실행
 
-### 완료 기록
+특정 Issue 테스트만 실행:
 
-Issue를 완료로 전환하기 전에 다음 결과를 Issue에 남긴다.
+```bash
+npm test -- tests/issues/issue-42-stock-transfer.test.ts
+```
 
-- 연결된 Issue 테스트 파일 경로
-- 실행한 명령
-- 종료 코드
-- 통과한 테스트 파일·테스트 수 또는 검증 수치
-- 미검증 항목과 그 사유
-- 필요 시 PR 및 최종 커밋 링크
+전체 Issue 테스트 포함 실행:
 
-현재 표준화된 구현·검증 루프 자체는 [`SSOT.md`](./SSOT.md)의 상태대로 추후 생성 예정이며, 위 내용은 Issue의 종료 조건과 검증 결과를 연결하기 위한 현재 문서화 기준이다.
-
-## 10. 현재 범위와 향후 생성
-
-현재 하네스는 실행 가능한 `Protected`, `Prepare`, `Types`, `Lint`, `Architecture Check`, `Test`, `Build` 단계를 제공한다.
-
-다음 항목은 [`SSOT.md`](./SSOT.md)의 상태대로 아직 별도 원본이 없다.
-
-- 표준화된 구현·검증 루프
-- 자동 승인 또는 승인자 대행 절차
-
-단, PR CI에서는 위 정책의 실행 예외가 적용될 수 있다. `GITHUB_ACTIONS=true`와 `GITHUB_EVENT_NAME=pull_request`가 모두 정확히 일치할 때만 보호 경로 변경을 CI 검증 예외로 통과시키며, 사람 review·CODEOWNERS·branch protection을 우회하거나 승인자를 대행하지 않는다. 로컬과 `main` push에서는 사람 승인 정책을 유지한다.
-
-`docs/07-plan.md`의 기존 QA 체크리스트와 `docs/06-architecture.md`의 자동 테스트 불변식은 각각의 원본 문서 내용이며, 이 문서의 실행·Issue 연결 기준과 충돌할 경우 SSOT 정책을 따른다.
-
-## 11. 변경 원칙
-
-- 실행 순서와 단계 책임을 바꾸면 `scripts/verify.ts`와 이 문서를 함께 확인한다.
-- 보호 경로와 승인 정책은 [`SSOT.md`](./SSOT.md)를 원본으로 한다.
-- 이 문서는 하네스 실행 안내이며, 도메인·아키텍처·GitHub Issue의 원본을 대체하지 않는다.
-- 보호 경로 변경이 발생하면 SSOT의 승인 및 `NEEDS_HUMAN` 정책을 적용한다.
-
-- 실행 순서와 단계 책임을 바꾸면 `scripts/verify.ts`와 이 문서를 함께 확인한다.
-- 보호 경로와 승인 정책은 [`SSOT.md`](./SSOT.md)를 원본으로 한다.
-- 이 문서는 하네스 실행 안내이며, 도메인·아키텍처·GitHub Issue의 원본을 대체하지 않는다.
-- 보호 경로 변경이 발생하면 SSOT의 승인 및 `NEEDS_HUMAN` 정책을 적용한다.
+```bash
+npm test
+```
