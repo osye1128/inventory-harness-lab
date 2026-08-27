@@ -48,8 +48,8 @@ export default async function PopupsPage() {
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <Badge tone={TONE[p.status as PopupStatus]}>
-                {POPUP_STATUS_LABEL[p.status as PopupStatus]}
+              <Badge tone={TONE[p.displayStatus]}>
+                {POPUP_STATUS_LABEL[p.displayStatus]}
               </Badge>
               <span className="text-sub">›</span>
             </div>
