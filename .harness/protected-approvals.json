@@ -20,58 +20,76 @@
       "reason": "사람이 승인한 전체 검증 흐름 변경"
     },
     {
-      "path": "package.json",
-      "sha256": "a02554963d3c4299ff4c10086c5ffcbf8be8ee29cfda5f57960f9daca0209f80",
+      "path": ".github/workflows/harness.yml",
+      "sha256": "1ff158453745c19ef7ea126953a0780869451762844a034fde6e95df563d5c1b",
       "approvedBy": "osye1128",
-      "reason": "보호 정책 및 검증 명령 변경을 명시적으로 승인"
+      "reason": "PR #10의 PR review/rework lifecycle 및 repository dispatch 보호 정책을 검토하고 승인함"
     },
     {
       "path": "docs/harness/02-verification.md",
-      "sha256": "d961cee14be493e9323108fa40cdc9c2246b485eeccbbe2bb349cc82234b0b52",
+      "sha256": "b9588e43ede537a4b59be6b14b74682088cf65f77f21cf5fee063b2fa76bbb79",
       "approvedBy": "osye1128",
-      "reason": "보호 정책 감사 결과에 따른 SSOT·검증·반복 하네스 정합성 개선을 명시적으로 승인"
+      "reason": "PR #10의 PR review/rework lifecycle 및 repository dispatch 보호 정책을 검토하고 승인함"
     },
     {
       "path": "docs/harness/03-loop.md",
-      "sha256": "9bc46283e78ec924673d289566443f9026ecada4eea360034edff75c0324297a",
+      "sha256": "71c2481f4bf02a48d7fd52a69c08dcabc0c869b54c4da95bb21a7e31e35f06cb",
       "approvedBy": "osye1128",
-      "reason": "보호 정책 감사 결과에 따른 SSOT·검증·반복 하네스 정합성 개선을 명시적으로 승인"
+      "reason": "PR #10의 PR review/rework lifecycle 및 repository dispatch 보호 정책을 검토하고 승인함"
     },
     {
       "path": "docs/harness/SSOT.md",
-      "sha256": "f8baf82a7c542b8a988498fdf368213aba2ca393afa4a4428f3283e25f0a4561",
+      "sha256": "ef6311c45a56b524a7b8a277e49ff249b8ae0e95242979c8e59c932740464ea3",
       "approvedBy": "osye1128",
-      "reason": "보호 정책 감사 결과에 따른 SSOT·검증·반복 하네스 정합성 개선을 명시적으로 승인"
+      "reason": "PR #10의 PR review/rework lifecycle 및 repository dispatch 보호 정책을 검토하고 승인함"
+    },
+    {
+      "path": "package.json",
+      "sha256": "63fdb824a4ab646ddd338f13505fafa992be86bb60c480c26c59323096f9f140",
+      "approvedBy": "osye1128",
+      "reason": "PR #10의 PR review/rework lifecycle 및 repository dispatch 보호 정책을 검토하고 승인함"
     },
     {
       "path": "scripts/approve-protected.ts",
       "sha256": "eb11248455cae8b02ab80ec77012ce2ad714427023665c33f2dc9692f3ad0bd0",
       "approvedBy": "osye1128",
-      "reason": "보호 정책 감사 결과에 따른 SSOT·검증·반복 하네스 정합성 개선을 명시적으로 승인"
+      "reason": "PR #10의 PR review/rework lifecycle 및 repository dispatch 보호 정책을 검토하고 승인함"
     },
     {
       "path": "scripts/check-protected.ts",
-      "sha256": "88df448ab788c38a2099ad6c30337d8145a2c095267ee94090b6123f918b4c64",
+      "sha256": "6f30137f9c12780aa6d5534a588078343590da6625c3148613a822c7d0dd5002",
       "approvedBy": "osye1128",
-      "reason": "보호 정책 감사 결과에 따른 SSOT·검증·반복 하네스 정합성 개선을 명시적으로 승인"
+      "reason": "PR #10의 PR review/rework lifecycle 및 repository dispatch 보호 정책을 검토하고 승인함"
+    },
+    {
+      "path": "scripts/github-events.ts",
+      "sha256": "5c6fef8cdaefd81910f2c2d6f4d789acf94fa0e2640db08189162d1e98785d24",
+      "approvedBy": "osye1128",
+      "reason": "PR #10의 PR review/rework lifecycle 및 repository dispatch 보호 정책을 검토하고 승인함"
     },
     {
       "path": "scripts/harness-ledger.ts",
       "sha256": "17200eafd197227c8f2626e5597918d9254d786b4db6239022f4b258861eb185",
       "approvedBy": "osye1128",
-      "reason": "보호 정책 감사 결과에 따른 SSOT·검증·반복 하네스 정합성 개선을 명시적으로 승인"
+      "reason": "PR #10의 PR review/rework lifecycle 및 repository dispatch 보호 정책을 검토하고 승인함"
     },
     {
       "path": "scripts/issue-run.ts",
       "sha256": "2fc978d962cecd249e6f134725567fd66c582bfe9b4eb45f3e2c8b4e4443570e",
       "approvedBy": "osye1128",
-      "reason": "보호 정책 감사 결과에 따른 SSOT·검증·반복 하네스 정합성 개선을 명시적으로 승인"
+      "reason": "PR #10의 PR review/rework lifecycle 및 repository dispatch 보호 정책을 검토하고 승인함"
+    },
+    {
+      "path": "scripts/process-repository-dispatch.ts",
+      "sha256": "08693aa2436731f951dfa8513ae38fbede3e8c7584481416abac950ba46a9eea",
+      "approvedBy": "osye1128",
+      "reason": "PR #10의 PR review/rework lifecycle 및 repository dispatch 보호 정책을 검토하고 승인함"
     },
     {
       "path": "scripts/protected-paths.ts",
-      "sha256": "ef5f84bfda9d6f40c13c5d8fb4311ccf07b62ef684f11f788e7cad3ec025a403",
+      "sha256": "574bfc4a10d2847a559a2ee5b012a5772b38f8d67570ce4afd18081d11f526c9",
       "approvedBy": "osye1128",
-      "reason": "보호 정책 감사 결과에 따른 SSOT·검증·반복 하네스 정합성 개선을 명시적으로 승인"
+      "reason": "PR #10의 PR review/rework lifecycle 및 repository dispatch 보호 정책을 검토하고 승인함"
     }
   ]
 }
