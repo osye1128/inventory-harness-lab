@@ -13,6 +13,8 @@
     "types": "tsc --noEmit",
     "prepare:verify": "tsx scripts/prepare-verify.ts",
     "verify": "tsx scripts/verify.ts",
+    "harness:run": "tsx scripts/issue-run.ts",
+    "harness:check": "tsx scripts/check-ledger.ts",
     "db:ensure": "tsx scripts/ensure-db.ts",
     "db:studio": "prisma studio",
     "db:migrate": "prisma migrate dev",

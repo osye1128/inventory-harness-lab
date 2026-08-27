@@ -16,7 +16,7 @@
 | 보호 경로 검사 | [`scripts/check-protected.ts`](../../scripts/check-protected.ts) | 구현됨 | 승인된 보호 경로 변경만 로컬·CI에서 통과 |
 | 검증 규칙 | [`02-verification.md`](./02-verification.md) | 구현됨 | 현재 하네스의 검증 절차와 단계별 규칙 |
 | 검증 실행 | [`scripts/verify.ts`](../../scripts/verify.ts) | 구현됨 | Protected → Prepare → Types → Lint → Architecture Check → Test → Build 실행 |
-| 구현·검증 루프 | 추후 생성 예정 | 아직 없음 | 작업을 구현하고 검증하며 결과를 기록하는 표준 루프 |
+| 구현·검증 루프 | [`02-verification.md`](./02-verification.md) | 구현됨 | 시도 원장, 검증 checkpoint, 세션 handoff, 사람 결정 기록 및 재개 규칙 |
 
 > **현재 원본이 없는 영역:** 구현·검증 루프는 아직 정의하지 않는다. 검증 절차의 원본은 [`02-verification.md`](./02-verification.md)이며, 이 문서는 해당 절차를 대체하지 않는다.
 
@@ -101,11 +101,13 @@ Harness 문서는 충돌을 임의로 해결하지 않는다. 사람의 판단�
 
 ### 구현·검증 루프
 
-- 상태: `추후 생성 예정`
-- 목적: Issue를 기준으로 구현하고, 향후 정의될 검증 규칙을 실행한 뒤 결과를 Issue에 기록하는 절차를 정의한다.
-- 현재 미정: 단계, 담당자, 승인 기준, 자동화 도구, 결과 기록 형식
-
-검증 규칙이 정의되고 개별 작업 Issue가 축적된 뒤 별도 문서로 생성한다.
+- 상태: `정의됨`
+- 실행 원장: [`.harness/ledger.jsonl`](../../.harness/ledger.jsonl)
+- 실행 명령: `npm run harness:run -- start|checkpoint|finish|handoff|decision <Issue 번호>`
+- 원장은 시도·검증 단계·세션 인수인계·사람 결정 이벤트를 append-only JSONL로 기록하며, `npm run harness:check`로 재생·검증한다.
+- 시도는 Issue의 최대 횟수를 초과할 수 없고, 원장과 현재 브랜치·커밋이 불일치하거나 미해결 `NEEDS_HUMAN` 결정이 있으면 자동 재개하지 않는다.
+- `.harness/ledger.jsonl`은 실행 이력의 기준이며, GitHub Issue/PR은 작업 정의와 사람 판단을 공유하는 기록이다. 둘이 충돌하면 `NEEDS_HUMAN`으로 중단한다.
+- AI와 CI는 사람 결정 이벤트를 대신 기록하거나 시도 횟수를 초기화하지 않는다.
 
 ## 8. 갱신 규칙
 
