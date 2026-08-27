@@ -58,8 +58,9 @@ CI에서는 [`../.github/workflows/verify.yml`](../../.github/workflows/verify.y
 보호 경로에 변경이 있으면 현재 파일의 LF 정규화 UTF-8 내용 SHA-256을 승인 파일과 비교한다.
 
 - 승인 기록: [`.harness/protected-approvals.json`](../../.harness/protected-approvals.json)
-- 승인 필드: `path`, `sha256`, `approvedBy`, `reason`
-- 승인 기록이 없거나 해시가 다르면 `PROTECTED_CHANGE_NEEDS_HUMAN`으로 실패
+- 승인 필드: `scope`, 각 승인 항목의 `path`, `sha256`, `approvedBy`, `reason`
+- `scope` 밖의 보호 경로가 변경되거나 승인 기록이 없거나 해시가 다르면 `PROTECTED_CHANGE_NEEDS_HUMAN`으로 실패
+- `scope`는 사람이 명시한 수정 범위이며 AI와 CI가 생성·확장하지 않는다.
 - 승인 파일 자체는 자기참조 해시 문제를 피하기 위해 보호 경로 목록에서 제외
 - 승인 파일 변경은 [`.github/CODEOWNERS`](../../.github/CODEOWNERS)와 GitHub branch protection 또는 ruleset으로 사람 review를 요구
 
@@ -70,7 +71,7 @@ CI에서는 [`../.github/workflows/verify.yml`](../../.github/workflows/verify.y
 3. `GITHUB_BASE_REF`
 4. 로컬 기본값 `HEAD`
 
-보호 경로 충돌이나 승인 의미가 불명확한 경우에는 [`SSOT.md`](./SSOT.md)의 `NEEDS_HUMAN` 정책을 따른다. 기본적으로 AI나 CI가 승인 기록을 생성하지 않는다. 단, `GITHUB_ACTIONS=true`와 `GITHUB_EVENT_NAME=pull_request`가 정확히 일치하는 PR CI에서는 `PR_CI_PROTECTED_CHECK_EXCEPTION`으로 보호 경로 변경을 검증 예외 처리할 수 있다. 이 예외는 사람 승인이나 승인 기록을 대체하지 않는다.
+보호 경로 충돌이나 승인 의미가 불명확한 경우에는 [`SSOT.md`](./SSOT.md)의 `NEEDS_HUMAN` 정책을 따른다. 사람의 명시적 지시 범위에 포함된 변경만 현재 파일의 `path`·`sha256`·`approvedBy`·`reason` 승인 기록과 일치할 때 통과한다. AI와 CI는 승인 기록을 생성하거나 수정하지 않으며, PR 이벤트·CI 환경 변수는 예외나 사람 승인을 제공하지 않는다. 로컬과 CI는 동일한 보호 검사를 수행한다.
 
 ### 4.2 Prepare
 
@@ -182,7 +183,7 @@ checkout(fetch-depth: 0)
   → npm run verify
 ```
 
-PR에서는 PR base SHA를 Protected 비교 기준으로 사용하고, `main` push에서는 직전 커밋을 기준으로 사용한다. `GITHUB_ACTIONS=true` 및 `GITHUB_EVENT_NAME=pull_request`가 정확히 일치하는 PR CI에서는 `PR_CI_PROTECTED_CHECK_EXCEPTION`이 적용될 수 있지만, 이는 사람 승인이나 승인 파일 갱신을 대체하지 않는다. workflow는 `contents: read` 권한만 가지며 승인 파일이나 저장소 내용을 수정하지 않는다.
+PR에서는 PR base SHA를 Protected 비교 기준으로 사용하고, `main` push에서는 직전 커밋을 기준으로 사용한다. 보호 경로 변경은 PR CI, `main` push, 로컬 실행 모두 사람의 명시적 지시와 승인 기록이 있어야 통과하며, CI 이벤트나 환경 변수에 따른 우회는 없다. workflow는 `contents: read` 권한만 가지며 승인 파일이나 저장소 내용을 수정하지 않는다.
 
 ## 7. 실패 처리
 

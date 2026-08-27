@@ -1,5 +1,13 @@
 {
   "version": 1,
+  "scope": [
+    "docs/harness/SSOT.md",
+    "package.json",
+    "scripts/check-architecture.ts",
+    "scripts/check-protected.ts",
+    "scripts/prepare-verify.ts",
+    "scripts/verify.ts"
+  ],
   "approvals": [
     {
       "path": "docs/harness/SSOT.md",

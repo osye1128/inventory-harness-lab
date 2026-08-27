@@ -50,15 +50,29 @@ function digest(relativePath: string): string {
 }
 
 type Approval = { path: string; sha256: string; approvedBy: string; reason?: string }
-type ApprovalFile = { version: 1; approvals: Approval[] }
+type ApprovalFile = { version: 1; scope?: string[]; approvals: Approval[] }
 
-function loadApprovals(): Approval[] {
-  if (!existsSync(approvalPath)) return []
+type ApprovalData = { scope: Set<string>; approvals: Approval[] }
+
+function loadApprovals(): ApprovalData {
+  if (!existsSync(approvalPath)) return { scope: new Set(), approvals: [] }
   const parsed = JSON.parse(readFileSync(approvalPath, 'utf8')) as ApprovalFile
   if (parsed.version !== 1 || !Array.isArray(parsed.approvals)) {
     throw new Error(`${path.relative(repository, approvalPath)} 형식이 올바르지 않습니다`)
   }
-  return parsed.approvals
+
+  const approvalPaths = parsed.approvals.map((approval) => approval.path.replaceAll('\\', '/'))
+  const scope = parsed.scope ?? approvalPaths
+  if (
+    !Array.isArray(scope) ||
+    scope.length === 0 && parsed.approvals.length > 0 ||
+    new Set(scope).size !== scope.length ||
+    scope.some((entry) => !protectedPaths.has(entry.replaceAll('\\', '/')))
+  ) {
+    throw new Error(`${path.relative(repository, approvalPath)}의 승인 범위가 올바르지 않습니다`)
+  }
+
+  return { scope: new Set(scope.map((entry) => entry.replaceAll('\\', '/'))), approvals: parsed.approvals }
 }
 
 const base = baseRevision()
@@ -69,22 +83,26 @@ if (changedProtected.length === 0) {
   process.exit(0)
 }
 
-const isPullRequestCi =
-  process.env.GITHUB_ACTIONS === 'true' && process.env.GITHUB_EVENT_NAME === 'pull_request'
-
-if (isPullRequestCi) {
-  console.log(
-    'PR_CI_PROTECTED_CHECK_EXCEPTION: PR CI 검증을 위해 보호 경로 변경을 통과합니다. 사람 승인을 기록하지 않습니다.'
-  )
-  process.exit(0)
-}
-
-const approvals = loadApprovals()
+const { scope, approvals } = loadApprovals()
+const changedScope = new Set(changedProtected.map((filePath) => filePath.replaceAll('\\', '/')))
+const outsideScope = [...changedScope].filter((filePath) => !scope.has(filePath))
 const missing = changedProtected.filter((filePath) => {
   const normalized = filePath.replaceAll('\\', '/')
   const currentHash = digest(normalized)
-  return !approvals.some((approval) => approval.path === normalized && approval.sha256 === currentHash && approval.approvedBy.trim())
+  return !approvals.some(
+    (approval) =>
+      approval.path.replaceAll('\\', '/') === normalized &&
+      approval.sha256 === currentHash &&
+      approval.approvedBy.trim() &&
+      approval.reason?.trim()
+  )
 })
+
+if (outsideScope.length > 0) {
+  console.error('PROTECTED_CHANGE_NEEDS_HUMAN: 승인 범위 밖의 보호 경로 변경입니다.')
+  for (const filePath of outsideScope) console.error(`- ${filePath}`)
+  process.exit(1)
+}
 
 if (missing.length > 0) {
   console.error('PROTECTED_CHANGE_NEEDS_HUMAN: 승인되지 않은 보호 경로 변경입니다.')
