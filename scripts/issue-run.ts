@@ -17,8 +17,16 @@ if (!Number.isInteger(issue) || issue < 1) throw new Error('Issue 번호가 필�
 if (!Number.isInteger(max) || max < 1) throw new Error('최대 시도 횟수가 올바르지 않습니다')
 
 const events = readLedger()
-const attemptNumber = nextAttempt(events)
+const attemptNumber = nextAttempt(events, issue)
 if (command === 'start') {
+  const issueAttempts = events.filter((event) => event.issue.number === issue)
+  const persistedMax = issueAttempts[0]?.attempt.max
+  if (persistedMax !== undefined && persistedMax !== max) {
+    throw new Error(`Issue #${issue}의 최대 시도 횟수가 기존 원장과 다릅니다. NEEDS_HUMAN으로 전환하세요.`)
+  }
+  if (issueAttempts.some((event) => event.kind === 'attempt.started' && !['passed', 'failed', 'interrupted', 'needs_human'].includes(String(event.payload.status)))) {
+    throw new Error(`Issue #${issue}에 완료되지 않은 시도가 있습니다. 먼저 handoff를 기록하세요.`)
+  }
   if (attemptNumber > max) throw new Error(`최대 시도 횟수(${max})에 도달했습니다. NEEDS_HUMAN으로 전환하세요.`)
   appendEvent({
     kind: 'attempt.started',
@@ -30,10 +38,19 @@ if (command === 'start') {
   console.log(`Issue #${issue} attempt ${attemptNumber}/${max} 시작`)
 } else if (command === 'checkpoint' || command === 'finish' || command === 'handoff' || command === 'decision') {
   const state = replayLedger(events)
-  const active = state.activeAttempt ?? events.filter((event) => event.issue.number === issue).at(-1)
+  const active = state.activeAttempt?.issue.number === issue
+    ? state.activeAttempt
+    : events.filter((event) => event.issue.number === issue).at(-1)
   if (!active) throw new Error('활성 시도를 찾을 수 없습니다')
-  const kind = `${command}.recorded` as EventKind
+  const kindByCommand: Record<string, EventKind> = {
+    checkpoint: 'checkpoint.recorded',
+    finish: 'attempt.finished',
+    handoff: 'handoff.recorded',
+    decision: 'decision.recorded',
+  }
+  const kind = kindByCommand[command]
   const status = (process.env.HARNESS_STATUS ?? (command === 'finish' ? 'passed' : 'running')) as EventStatus
+  if (!kind) throw new Error(`지원하지 않는 명령입니다: ${command}`)
   appendEvent({
     kind,
     issue: active.issue,

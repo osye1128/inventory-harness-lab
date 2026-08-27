@@ -25,7 +25,8 @@ IN_PROGRESS → HANDOFF → IN_PROGRESS
 NEEDS_HUMAN → READY (유효한 사람 결정 후)
 ```
 
-- `NEEDS_HUMAN`에서는 AI가 추가 수정·재시도·승인 추정을 하지 않는다.
+- `NEEDS_HUMAN`은 자동화가 안전하게 다음 행동을 결정할 수 없어 유효한 사람 결정 전까지 중단된 workflow 상태다.
+- 이 상태에서는 추가 코드 수정·attempt·retry·승인자 추정·attempt 초기화·원본 임의 선택·자동 READY 복귀를 하지 않는다.
 - `PASSED`는 기계 검증 결과이고, `READY_FOR_REVIEW`는 사람 검토를 기다리는 상태다.
 - `COMPLETED`는 모든 종료 조건과 검증, 필요한 사람 리뷰·머지가 확인된 경우에만 사용한다.
 - 상태 전이와 이벤트는 [`ledger.jsonl`](../../.harness/ledger.jsonl)에 기록한다.
@@ -45,14 +46,14 @@ Issue의 `max-implementation-loops`를 구현→검증 사이클의 전체 상�
 
 ## 4. 검증 판정 이후 행동
 
-| `02-verification.md` 판정 | 반복 절차의 행동 |
-|---|---|
-| 모든 단계 통과 | 결과를 기록하고 반복 종료, `READY_FOR_REVIEW`로 이동 |
-| 코드·테스트 검증 실패 | 원인·영향을 기록하고 남은 시도 안에서 수정 후 재검증 |
+| `02-verification.md` 판정        | 반복 절차의 행동                                                                                                 |
+| ------------------------------ | --------------------------------------------------------------------------------------------------------- |
+| 모든 단계 통과                       | 결과를 기록하고 반복 종료, `READY_FOR_REVIEW`로 이동                                                                    |
+| 코드·테스트 검증 실패                   | 원인·영향을 기록하고 남은 시도 안에서 수정 후 재검증                                                                            |
 | `PROTECTED_CHANGE_NEEDS_HUMAN` | 우회·승인 추정 금지, 사람이 `npm run verify:approve -- --scope ... --approved-by ... --reason ...`을 실행한 뒤 같은 범위로 재검증 |
-| `NEEDS_HUMAN` 또는 원본 충돌 | 구현 중단, 결정 기록 후 사람 결정이 있을 때만 재개 |
-| Issue 테스트·종료 조건 불충족 | 완료 주장 금지, 보완 가능하면 다음 시도, 해석이 필요하면 사람에게 이관 |
-| 실행 중단·취소 | `interrupted`로 기록하고 handoff 작성, 상태 확인 후 재개 |
+| `NEEDS_HUMAN` 또는 원본 충돌         | 구현 중단, 결정 기록 후 사람 결정이 있을 때만 재개                                                                            |
+| Issue 테스트·종료 조건 불충족            | 완료 주장 금지, 보완 가능하면 다음 시도, 해석이 필요하면 사람에게 이관                                                                 |
+| 실행 중단·취소                       | `interrupted`로 기록하고 handoff 작성, 상태 확인 후 재개                                                                |
 
 판정의 의미는 02가 정하고, 그 판정에 따른 반복·중단 행동은 이 문서가 정한다.
 
@@ -93,7 +94,24 @@ handoff에는 최소한 다음을 기록한다.
 - 결정이 superseded 되었거나 필요한 사람 결정이 없음
 - 원장이 손상되었거나 handoff projection과 불일치함
 
-## 7. 사람 개입과 결정 기록
+## 7. NEEDS_HUMAN 진입·기록·해제
+
+`NEEDS_HUMAN`은 이 문서가 정의하는 workflow 상태다. 검증기 outcome이나 단순 사람 리뷰 대기(`READY_FOR_REVIEW`)와 혼동하지 않는다.
+
+다음 경우 자동화는 `NEEDS_HUMAN`으로 전환한다.
+
+- 원본 간 충돌 또는 종료 조건 해석의 모호성
+- 보호 경로 승인 필요 또는 승인 범위 불명확
+- 구현 attempt 상한 도달
+- ledger·Git·handoff 불일치
+- 데이터 손실·상태 모델 변경·외부 시스템 변경 판단 필요
+- CI 실패가 로컬에서 재현되지 않음
+
+상태가 `NEEDS_HUMAN`인 동안 추가 수정·자동 재시도·승인 추정·attempt 초기화·자동 상태 복귀를 금지한다. 기록에는 `reasonCode`, 발생 단계, Issue/URL, 관련 문서·경로·조건, branch/base/head/tree, 사용 attempt/max, 자동 진행 불가 이유, 사람에게 필요한 질문과 선택지를 포함한다.
+
+해제는 유효한 `decision.recorded` 이벤트로만 가능하다. 결정에는 `decisionId`, 사람 `actor`, `decidedAt`, `reasonCode`, `decision`, `scope`, `allowedNextState`, `evidence`, 선택적 `supersedes`를 포함한다. AI·CI·빈 actor, 단순 댓글, CI 재실행·성공은 사람 결정이 아니다. 결정의 reasonCode가 blocker와 일치하고 superseded되지 않았을 때만 `allowedNextState`로 복귀하며, 코드 수정은 새 attempt로 시작한다.
+
+## 8. 사람 개입과 결정 기록
 
 다음 상황은 자동으로 판단하지 않고 `NEEDS_HUMAN`으로 멈춘다.
 

@@ -1,10 +1,12 @@
 # 02. 검증
 
-> 작성일: 2026-08-26 · 상태: 현재 하네스 골격 기준 · 원본: [`SSOT.md`](./SSOT.md)
+> 작성일: 2026-08-26 · 상태: 검증 판정 원본 · 원본: 이 문서
+
+이 문서는 검증 규칙의 원본이다. `SSOT.md`는 원본 위치와 책임을 등록하고, 판정 이후의 반복 절차는 [`03-loop.md`](./03-loop.md)가 담당한다.
 
 ## 1. 목적
 
-이 문서는 현재 저장소에 구현된 검증 하네스의 실행 흐름과 각 단계의 책임을 안내한다. 검증 규칙의 도메인 원본은 [`SSOT.md`](./SSOT.md)가 지정한 원본 문서를 따르며, 이 문서는 실행 방법을 설명하는 참조 문서다.
+이 문서는 검증 단계, 실행 순서, 단계별 통과 조건과 판정 코드의 원본이다. 도메인 완료 기준과 아키텍처 불변식은 SSOT.md가 지정한 원본 문서를 참조한다.
 
 이 문서는 재고 도메인이나 아키텍처를 새로 정의하지 않는다. 도메인 규칙은 [`../01-requirements.md`](../01-requirements.md), 아키텍처 결정은 [`../06-architecture.md`](../06-architecture.md)를 따른다.
 
@@ -47,7 +49,7 @@ cp .env.example .env
 
 `npm run verify`는 검증 전용 DB를 자체 생성하므로 기존 `prisma/dev.db`를 사용하거나 삭제하지 않는다. `DATABASE_URL`은 각 하위 단계에 검증 전용 임시 DB URL로 전달된다.
 
-CI에서는 [`../.github/workflows/verify.yml`](../../.github/workflows/verify.yml)이 `npm ci` 후 `npm run verify`를 실행한다. workflow는 실제 운영 비밀을 사용하지 않고 CI 전용 `SESSION_SECRET`만 제공한다.
+CI에서는 [`../../.github/workflows/verify.yml`](../../.github/workflows/verify.yml)이 `npm ci` 후 `npm run verify`를 실행한다. workflow는 실제 운영 비밀을 사용하지 않고 CI 전용 `SESSION_SECRET`만 제공한다.
 
 ## 4. 단계별 동작
 
@@ -60,10 +62,12 @@ CI에서는 [`../.github/workflows/verify.yml`](../../.github/workflows/verify.y
 - 승인 기록: [`.harness/protected-approvals.json`](../../.harness/protected-approvals.json)
 - 사람이 로컬에서 명시적으로 실행하는 승인 명령: `npm run verify:approve -- --scope <path> --reason <사유>` (`approvedBy` 기본값: `osye1128`) 또는 다른 승인자가 필요한 경우 `--approved-by <사람>` 추가
 - 승인 필드: `path`, `sha256`, `approvedBy`, `reason`
-- `--scope`는 현재 보호 경로 변경과 정확히 일치해야 하며, 승인 기록이 없거나 해시가 다르면 `PROTECTED_CHANGE_NEEDS_HUMAN`으로 실패
+- `--scope`는 현재 보호 경로 변경과 정확히 일치해야 하며, 승인 기록이 없거나 해시가 다르면 `outcome=BLOCKED`, `reasonCode=PROTECTED_APPROVAL_MISSING` 또는 `PROTECTED_APPROVAL_HASH_MISMATCH`로 반환한다. workflow 상태 전환은 [`03-loop.md`](./03-loop.md)가 담당한다.
 - 승인 명령은 CI에서 실행할 수 없고, PR 생성·CI 성공·AI 실행은 승인으로 간주하지 않는다.
 - 승인 파일 자체는 자기참조 해시 문제를 피하기 위해 보호 경로 목록에서 제외
 - 승인 파일 변경은 [`.github/CODEOWNERS`](../../.github/CODEOWNERS)와 GitHub branch protection 또는 ruleset으로 사람 review를 요구
+
+로컬 승인 명령은 base 환경변수가 없으면 `HEAD` 대비 미커밋 변경을 대상으로 한다. CI/PR은 workflow가 명시한 base SHA를 사용한다.
 
 비교 기준은 다음 우선순위를 따른다.
 
@@ -72,7 +76,7 @@ CI에서는 [`../.github/workflows/verify.yml`](../../.github/workflows/verify.y
 3. `GITHUB_BASE_REF`
 4. 로컬 기본값 `HEAD`
 
-보호 경로 충돌이나 승인 의미가 불명확한 경우에는 [`SSOT.md`](./SSOT.md)의 `NEEDS_HUMAN` 정책을 따른다. 기본적으로 AI나 CI가 승인 기록을 생성하지 않는다. 단, `GITHUB_ACTIONS=true`와 `GITHUB_EVENT_NAME=pull_request`가 정확히 일치하는 PR CI에서는 `PR_CI_PROTECTED_CHECK_EXCEPTION`으로 보호 경로 변경을 검증 예외 처리할 수 있다. 이 예외는 사람 승인이나 승인 기록을 대체하지 않는다.
+보호 경로 충돌이나 승인 의미가 불명확한 경우에는 [`SSOT.md`](./SSOT.md)의 `NEEDS_HUMAN` 정책을 따른다. AI와 CI는 승인 기록을 생성하지 않으며, PR 이벤트나 CI 환경 변수는 보호 경로 승인 예외가 아니다. 로컬과 CI는 동일한 승인 검사를 수행한다.
 
 ### 4.2 Prepare
 
@@ -184,14 +188,14 @@ checkout(fetch-depth: 0)
   → npm run verify
 ```
 
-PR에서는 PR base SHA를 Protected 비교 기준으로 사용하고, `main` push에서는 직전 커밋을 기준으로 사용한다. `GITHUB_ACTIONS=true` 및 `GITHUB_EVENT_NAME=pull_request`가 정확히 일치하는 PR CI에서는 `PR_CI_PROTECTED_CHECK_EXCEPTION`이 적용될 수 있지만, 이는 사람 승인이나 승인 파일 갱신을 대체하지 않는다. workflow는 `contents: read` 권한만 가지며 승인 파일이나 저장소 내용을 수정하지 않는다.
+PR에서는 PR base SHA를 Protected 비교 기준으로 사용하고, `main` push에서는 직전 커밋을 기준으로 사용한다. 보호 경로 변경은 PR CI와 `main` push, 로컬 실행 모두 승인 기록이 필요하며 CI 환경 변수로 우회할 수 없다. workflow는 `contents: read` 권한만 가지며 승인 파일이나 저장소 내용을 수정하지 않는다.
 
 ## 7. 실패 처리
 
 | 상태                                          | 의미                            | 조치                               |
 | ------------------------------------------- | ----------------------------- | -------------------------------- |
-| `PROTECTED_CHANGE_NEEDS_HUMAN`              | 보호 경로 변경에 승인 기록이 없거나 해시가 불일치  | 사람이 승인 내용을 검토하고 승인 파일을 갱신한 뒤 재실행 |
-| `NEEDS_HUMAN`                               | SSOT·Issue·SSOT 간 충돌 또는 판단 불가 | AI가 임의로 진행하지 않고 사람의 판단을 요청       |
+| `BLOCKED / PROTECTED_APPROVAL_*`            | 보호 경로 승인 기록이 없거나 해시가 불일치          | 판정을 03-loop에 전달하고 사람 승인 후 재실행 |
+| `BLOCKED / *_CONFLICT`                      | 원본 충돌 또는 판단 불가                            | 판정을 03-loop에 전달하고 상태 전환은 03-loop가 결정 |
 | Types/Lint/Architecture Check/Test/Build 실패 | 해당 기술 검증 단계 실패                | 오류를 수정한 뒤 전체 검증 재실행              |
 
 실패 원인을 숨기거나 승인 단계를 우회하지 않는다.
@@ -209,7 +213,7 @@ Issue 종료 조건과 반복 실행을 연결할 때는 [`03-loop.md`](./03-loo
 ### 처리 기준
 
 1. 작업을 시작하기 전에 해당 Issue의 배경, 변경할 내용, 종료 조건, 기계 검증, 변경 금지 범위, 구현 루프 최대 횟수를 확인한다.
-2. Issue의 종료 조건마다 실행 조건·판정 기준·기대 결과가 있는지 확인한다. 기준이 추상적이거나 서로 충돌하면 구현을 시작하지 않고 `NEEDS_HUMAN`으로 판단을 요청한다.
+2. Issue의 종료 조건마다 실행 조건·판정 기준·기대 결과가 있는지 확인한다. 기준이 추상적이거나 서로 충돌하면 `outcome=BLOCKED`, `reasonCode=ACCEPTANCE_CRITERIA_AMBIGUOUS`로 반환하고 상태 전환은 [`03-loop.md`](./03-loop.md)에 맡긴다.
 3. Issue 번호와 기능명을 사용해 종료 조건을 검증하는 테스트를 다음 경로에 둔다.
 
    Issue 번호와 기능명은 반드시 실제 GitHub Issue의 값과 일치해야 한다. Issue가 아직 없거나 번호를 특정할 수 없으면 테스트 파일을 임의로 만들지 않고 사람에게 Issue 등록 또는 번호 확인을 요청한다.
@@ -219,7 +223,7 @@ Issue 종료 조건과 반복 실행을 연결할 때는 [`03-loop.md`](./03-loo
    테스트 파일명은 다음 정규식 형식을 따른다.
 
    ```text
-   ^tests/issues/issue-[1-9][0-9]*-[a-z0-9]+(?:-[a-z0-9]+)*\\.test\\.ts$
+   ^tests/issues/issue-[1-9][0-9]*-[a-z0-9]+(?:-[a-z0-9]+)*\.test\.ts$
    ```
 
    Issue 번호와 기능명이 파일명에 없거나, 다른 Issue의 번호를 사용하거나, 기능명을 식별할 수 없는 파일명은 유효한 Issue 테스트로 보지 않는다.

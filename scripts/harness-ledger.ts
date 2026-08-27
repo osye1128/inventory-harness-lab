@@ -101,7 +101,12 @@ export function replayLedger(events = readLedger()): LedgerState {
   return { events, attempts, activeAttempt }
 }
 
-export function nextAttempt(events = readLedger()): number {
+export function nextAttempt(events = readLedger(), issueNumber?: number): number {
   const attempts = replayLedger(events).attempts
-  return attempts.size === 0 ? 1 : Math.max(...[...attempts.values()].map((attempt) => attempt.number)) + 1
+  const issueAttempts = issueNumber === undefined
+    ? [...attempts.values()]
+    : [...attempts.entries()]
+        .filter(([id]) => events.some((event) => event.attempt.id === id && event.issue.number === issueNumber))
+        .map(([, attempt]) => attempt)
+  return issueAttempts.length === 0 ? 1 : Math.max(...issueAttempts.map((attempt) => attempt.number)) + 1
 }

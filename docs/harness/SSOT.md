@@ -1,6 +1,8 @@
 # Harness SSOT
 
-> 작성일: 2026-08-26 · 상태: 기준 선언 · 검증 규칙/구현·검증 루프: 추후 생성
+> 작성일: 2026-08-26 · 상태: 기준 선언 · 검증 규칙/구현·검증 루프: 정의됨
+
+이 문서는 정책 원본 자체가 아니라 각 정책 원본의 위치와 책임을 등록하는 문서다.
 
 ## 1. 목적
 
@@ -12,7 +14,7 @@
 | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | --------------- | ------------------------------------------------------------------------- |
 | 재고 도메인   | [`docs/01-requirements.md`](../01-requirements.md)                                                                                              | 존재              | 재고 개념, 로트, 거점, FEFO/LEFO, 이동·사유·팝업·감사 규칙, 범위와 완료 기준                       |
 | 아키텍처     | [`docs/06-architecture.md`](../06-architecture.md)                                                                                              | 존재              | 기술 스택, 데이터 모델, 계층·트랜잭션 경계, 재고 변경 통로, 상태 흐름, 성능·동시성 결정                     |
-| 개별 작업    | 해당 [GitHub Issue](https://github.com/osye1128/inventory-harness-lab/issues) 및 [`maintenance.yml`](../../.github/ISSUE_TEMPLATE/maintenance.yml) | 현재 등록된 Issue 없음 | 작업 목적, 범위, 수용 조건, 의존성, 상태와 구현·검증 결과                                       |
+| 개별 작업    | 해당 [GitHub Issue](https://github.com/osye1128/inventory-harness-lab/issues) 및 [`maintenance.yml`](../../.github/ISSUE_TEMPLATE/maintenance.yml) | 정의됨 | 작업 목적, 범위, 수용 조건, 의존성, 상태와 구현·검증 결과                                       |
 | 보호 경로 검사 | [`scripts/check-protected.ts`](../../scripts/check-protected.ts)                                                                                | 구현됨             | 승인된 보호 경로 변경만 로컬·CI에서 통과                                                  |
 | 검증 규칙    | [`02-verification.md`](./02-verification.md)                                                                                                    | 구현됨             | 검증 단계와 성공·실패 판정                                                           |
 | 검증 실행    | [`scripts/verify.ts`](../../scripts/verify.ts)                                                                                                  | 구현됨             | Protected → Prepare → Types → Lint → Architecture Check → Test → Build 실행 |
@@ -28,7 +30,7 @@
 - 유지보수 Issue는 [`.github/ISSUE_TEMPLATE/maintenance.yml`](../../.github/ISSUE_TEMPLATE/maintenance.yml)의 6개 항목을 따른다. 종료 조건은 기준·수치·기대 결과로 참·거짓을 판정할 수 있게 작성하고, 구현 루프 최대 횟수의 기본값은 3회다.
 - Issue의 종료 조건을 검증하는 테스트는 `tests/issues/issue-{Issue 번호}-{기능명}.test.ts` 규칙을 따른다. 테스트가 종료 조건을 모두 검증하지 않거나 실패하면 완료로 보지 않는다.
 - `docs/harness` 문서는 원본의 위치와 관계만 안내한다. 도메인 규칙, 아키텍처 결정, 작업 목록, 검증 규칙을 별도로 복제하지 않는다.
-- 기존 [`docs/07-plan.md`](../07-plan.md)의 계획·QA 내용은 해당 문서의 범위에 머문다. 아직 생성되지 않은 Harness 검증 규칙이나 구현·검증 루프로 간주하지 않는다.
+- 기존 [`docs/07-plan.md`](../07-plan.md)의 계획·QA 내용은 해당 문서의 범위에 머문다. Harness 검증 규칙과 구현·검증 루프는 각각 [`02-verification.md`](./02-verification.md)와 [`03-loop.md`](./03-loop.md)를 따른다.
 
 ## 4. 충돌 처리
 
@@ -59,7 +61,12 @@ Harness 문서는 충돌을 임의로 해결하지 않는다. 사람의 판단�
 - `docs/01-requirements.md`
 - `docs/06-architecture.md`
 - `docs/harness/SSOT.md`
-- `package.json`의 검증 관련 scripts
+- `docs/harness/02-verification.md`
+- `docs/harness/03-loop.md`
+- `.github/workflows/verify.yml`
+- `.github/CODEOWNERS`
+- `.github/ISSUE_TEMPLATE/maintenance.yml`
+- `package.json`의 전체 파일(검증 scripts를 포함)
 - `scripts/check-architecture.ts`
 - `scripts/check-protected.ts`
 - `scripts/prepare-verify.ts`
@@ -114,7 +121,7 @@ Harness 문서는 충돌을 임의로 해결하지 않는다. 사람의 판단�
 - 도메인 원본이 바뀌면 이 문서의 링크와 상태만 필요한 범위에서 갱신한다.
 - 아키텍처 원본이 바뀌면 이 문서의 링크와 상태만 필요한 범위에서 갱신한다.
 - Issue는 GitHub를 원본으로 하며, 이 문서에 작업 내용을 복사해 별도 백로그를 만들지 않는다.
-- 검증 규칙과 구현·검증 루프가 실제로 생성될 때 각각의 원본·상태·책임 범위를 이 문서에 추가한다.
+- 검증 규칙과 구현·검증 루프의 원본·상태·책임 범위가 변경될 때 이 문서의 등록 정보만 갱신한다.
 - 이 디렉터리의 문서 변경은 코드·DB 변경과 별도로 검토한다.
 
 ## 9. 참고
@@ -127,6 +134,7 @@ Harness 문서는 충돌을 임의로 해결하지 않는다. 사람의 판단�
 - 보호 경로 승인: [`.harness/protected-approvals.json`](../../.harness/protected-approvals.json)
 - 보호 경로 검사: [`scripts/check-protected.ts`](../../scripts/check-protected.ts)
 - 보호 경로 소유자: [`.github/CODEOWNERS`](../../.github/CODEOWNERS)
-- 현재 부재: 검증 규칙, 구현·검증 루프
+- 검증 규칙: [`02-verification.md`](./02-verification.md)
+- 구현·검증 루프: [`03-loop.md`](./03-loop.md)
 
 이 문서는 위 원본을 대체하지 않으며, 원본이 변경되면 링크와 상태를 필요한 범위에서만 갱신한다.

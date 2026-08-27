@@ -1,21 +1,11 @@
 import { createHash } from 'node:crypto'
-import { readFileSync, existsSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { execFileSync } from 'node:child_process'
 import path from 'node:path'
+import { PROTECTED_PATH_SET } from './protected-paths'
 
 const repository = process.cwd()
 const approvalPath = path.join(repository, '.harness', 'protected-approvals.json')
-const protectedPaths = new Set([
-  'docs/01-requirements.md',
-  'docs/06-architecture.md',
-  'docs/harness/SSOT.md',
-  'package.json',
-  'scripts/check-architecture.ts',
-  'scripts/check-protected.ts',
-  'scripts/prepare-verify.ts',
-  'scripts/verify.ts',
-])
-
 const git = (...args: string[]) => execFileSync('git', args, { cwd: repository, encoding: 'utf8' }).trim()
 
 function baseRevision(): string {
@@ -34,12 +24,8 @@ function baseRevision(): string {
 
 function changedPaths(base: string): string[] {
   const tracked = git('diff', '--name-only', base, '--').split(/\r?\n/).filter(Boolean)
-  const untracked = git('status', '--porcelain', '--untracked-files=all')
-    .split(/\r?\n/)
-    .filter(Boolean)
-    .filter((line) => line.startsWith('?? '))
-    .map((line) => line.slice(3))
-  return [...new Set([...tracked, ...untracked])]
+  const untracked = git('ls-files', '--others', '--exclude-standard').split(/\r?\n/).filter(Boolean)
+  return [...new Set([...tracked, ...untracked])].map((filePath) => filePath.replaceAll('\\', '/'))
 }
 
 function digest(relativePath: string): string {
@@ -49,52 +35,53 @@ function digest(relativePath: string): string {
   return createHash('sha256').update(normalized, 'utf8').digest('hex')
 }
 
-type Approval = { path: string; sha256: string; approvedBy: string; reason?: string }
-type ApprovalFile = { version: 1; approvals: Approval[] }
+type Approval = { path: string; sha256: string; approvedBy: string; reason: string }
 
 function loadApprovals(): Approval[] {
   if (!existsSync(approvalPath)) return []
-  const parsed = JSON.parse(readFileSync(approvalPath, 'utf8')) as ApprovalFile
-  if (parsed.version !== 1 || !Array.isArray(parsed.approvals)) {
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(readFileSync(approvalPath, 'utf8'))
+  } catch {
     throw new Error(`${path.relative(repository, approvalPath)} 형식이 올바르지 않습니다`)
   }
-  return parsed.approvals
+  if (typeof parsed !== 'object' || parsed === null || !('version' in parsed) || !('approvals' in parsed))
+    throw new Error(`${path.relative(repository, approvalPath)} 형식이 올바르지 않습니다`)
+  const value = parsed as { version: unknown; approvals: unknown }
+  if (value.version !== 1 || !Array.isArray(value.approvals))
+    throw new Error(`${path.relative(repository, approvalPath)} 형식이 올바르지 않습니다`)
+  const seen = new Set<string>()
+  return value.approvals.map((candidate, index) => {
+    if (typeof candidate !== 'object' || candidate === null) throw new Error(`승인 항목 ${index + 1}이 올바르지 않습니다`)
+    const approval = candidate as Partial<Approval>
+    const normalizedPath = typeof approval.path === 'string' ? approval.path.replaceAll('\\', '/') : ''
+    const sha256 = typeof approval.sha256 === 'string' ? approval.sha256 : ''
+    const approvedBy = typeof approval.approvedBy === 'string' ? approval.approvedBy.trim() : ''
+    const reason = typeof approval.reason === 'string' ? approval.reason.trim() : ''
+    if (!PROTECTED_PATH_SET.has(normalizedPath) || seen.has(normalizedPath) || !/^[a-f0-9]{64}$/.test(sha256) || !approvedBy || !reason)
+      throw new Error(`승인 항목 ${index + 1}이 올바르지 않습니다`)
+    seen.add(normalizedPath)
+    return { path: normalizedPath, sha256, approvedBy, reason }
+  })
 }
 
 const base = baseRevision()
-const changedProtected = changedPaths(base).filter((filePath) => protectedPaths.has(filePath.replaceAll('\\', '/')))
-
+const changedProtected = changedPaths(base).filter((filePath) => PROTECTED_PATH_SET.has(filePath))
 if (changedProtected.length === 0) {
   console.log('Protected 통과: 보호 경로 변경이 없습니다.')
   process.exit(0)
 }
 
-const isPullRequestCi =
-  process.env.GITHUB_ACTIONS === 'true' && process.env.GITHUB_EVENT_NAME === 'pull_request'
-
-if (isPullRequestCi) {
-  console.log(
-    'PR_CI_PROTECTED_CHECK_EXCEPTION: PR CI 검증을 위해 보호 경로 변경을 통과합니다. 사람 승인을 기록하지 않습니다.'
-  )
-  process.exit(0)
-}
-
 const approvals = loadApprovals()
 const missing = changedProtected.filter((filePath) => {
-  const normalized = filePath.replaceAll('\\', '/')
-  const currentHash = digest(normalized)
-  return !approvals.some((approval) => approval.path === normalized && approval.sha256 === currentHash && approval.approvedBy.trim())
+  const currentHash = digest(filePath)
+  return !approvals.some((approval) => approval.path === filePath && approval.sha256 === currentHash)
 })
-
 if (missing.length > 0) {
   console.error('PROTECTED_CHANGE_NEEDS_HUMAN: 승인되지 않은 보호 경로 변경입니다.')
   console.error(`비교 기준: ${base}`)
-  for (const filePath of missing) {
-    const normalized = filePath.replaceAll('\\', '/')
-    console.error(`- ${normalized} (sha256: ${digest(normalized)})`)
-  }
-  console.error(`사람이 ${path.relative(repository, approvalPath)}에 경로·sha256·approvedBy·reason을 기록한 뒤 다시 실행하세요.`)
+  for (const filePath of missing) console.error(`- ${filePath} (sha256: ${digest(filePath)})`)
+  console.error('사람이 npm run verify:approve -- --scope <path> --reason <사유>를 실행한 뒤 다시 실행하세요.')
   process.exit(1)
 }
-
 console.log('Protected 통과: 모든 보호 경로 변경이 사람의 승인 기록과 일치합니다.')
