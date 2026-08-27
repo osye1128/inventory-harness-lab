@@ -58,8 +58,10 @@ CI에서는 [`../.github/workflows/verify.yml`](../../.github/workflows/verify.y
 보호 경로에 변경이 있으면 현재 파일의 LF 정규화 UTF-8 내용 SHA-256을 승인 파일과 비교한다.
 
 - 승인 기록: [`.harness/protected-approvals.json`](../../.harness/protected-approvals.json)
+- 사람이 로컬에서 명시적으로 실행하는 승인 명령: `npm run verify:approve -- --scope <path> --reason <사유>` (`approvedBy` 기본값: `osye1128`) 또는 다른 승인자가 필요한 경우 `--approved-by <사람>` 추가
 - 승인 필드: `path`, `sha256`, `approvedBy`, `reason`
-- 승인 기록이 없거나 해시가 다르면 `PROTECTED_CHANGE_NEEDS_HUMAN`으로 실패
+- `--scope`는 현재 보호 경로 변경과 정확히 일치해야 하며, 승인 기록이 없거나 해시가 다르면 `PROTECTED_CHANGE_NEEDS_HUMAN`으로 실패
+- 승인 명령은 CI에서 실행할 수 없고, PR 생성·CI 성공·AI 실행은 승인으로 간주하지 않는다.
 - 승인 파일 자체는 자기참조 해시 문제를 피하기 위해 보호 경로 목록에서 제외
 - 승인 파일 변경은 [`.github/CODEOWNERS`](../../.github/CODEOWNERS)와 GitHub branch protection 또는 ruleset으로 사람 review를 요구
 
@@ -186,15 +188,21 @@ PR에서는 PR base SHA를 Protected 비교 기준으로 사용하고, `main` pu
 
 ## 7. 실패 처리
 
-| 상태 | 의미 | 조치 |
-|---|---|---|
-| `PROTECTED_CHANGE_NEEDS_HUMAN` | 보호 경로 변경에 승인 기록이 없거나 해시가 불일치 | 사람이 승인 내용을 검토하고 승인 파일을 갱신한 뒤 재실행 |
-| `NEEDS_HUMAN` | SSOT·Issue·SSOT 간 충돌 또는 판단 불가 | AI가 임의로 진행하지 않고 사람의 판단을 요청 |
-| Types/Lint/Architecture Check/Test/Build 실패 | 해당 기술 검증 단계 실패 | 오류를 수정한 뒤 전체 검증 재실행 |
+| 상태                                          | 의미                            | 조치                               |
+| ------------------------------------------- | ----------------------------- | -------------------------------- |
+| `PROTECTED_CHANGE_NEEDS_HUMAN`              | 보호 경로 변경에 승인 기록이 없거나 해시가 불일치  | 사람이 승인 내용을 검토하고 승인 파일을 갱신한 뒤 재실행 |
+| `NEEDS_HUMAN`                               | SSOT·Issue·SSOT 간 충돌 또는 판단 불가 | AI가 임의로 진행하지 않고 사람의 판단을 요청       |
+| Types/Lint/Architecture Check/Test/Build 실패 | 해당 기술 검증 단계 실패                | 오류를 수정한 뒤 전체 검증 재실행              |
 
 실패 원인을 숨기거나 승인 단계를 우회하지 않는다.
 
-## 8. Issue 처리
+## 8. 반복 절차 연결
+
+검증 결과에 따른 수정·재검증·시도 상한·세션 handoff·사람 결정 절차는 [`03-loop.md`](./03-loop.md)를 따른다. 이 문서는 검증 판정 자체를 정의하며, 판정 이후의 행동을 중복해서 정의하지 않는다.
+
+## 9. Issue 처리
+
+Issue 종료 조건과 반복 실행을 연결할 때는 [`03-loop.md`](./03-loop.md)의 상태·시도·재개 규칙을 함께 적용한다.
 
 개별 작업의 원본은 해당 GitHub Issue다. 이 문서는 Issue의 내용을 대신 정의하지 않고, Issue에 적힌 종료 조건을 검증 하네스와 연결하는 방법을 안내한다.
 
