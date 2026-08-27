@@ -61,6 +61,7 @@ CI에서는 [`../.github/workflows/verify.yml`](../../.github/workflows/verify.y
 - 승인 필드: `scope`, 각 승인 항목의 `path`, `sha256`, `approvedBy`, `reason`
 - `scope` 밖의 보호 경로가 변경되거나 승인 기록이 없거나 해시가 다르면 `PROTECTED_CHANGE_NEEDS_HUMAN`으로 실패
 - `scope`는 사람이 명시한 수정 범위이며 AI와 CI가 생성·확장하지 않는다.
+- PR CI에서는 지정 CODEOWNER의 현재 PR head 대상 `APPROVED` 리뷰도 확인한다. PR 생성·로컬 검증·CI 성공은 승인으로 간주하지 않는다.
 - 승인 파일 자체는 자기참조 해시 문제를 피하기 위해 보호 경로 목록에서 제외
 - 승인 파일 변경은 [`.github/CODEOWNERS`](../../.github/CODEOWNERS)와 GitHub branch protection 또는 ruleset으로 사람 review를 요구
 
