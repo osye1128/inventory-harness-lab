@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "protected": "tsx scripts/check-protected.ts",
+    "verify:approve": "tsx scripts/approve-protected.ts",
     "architecture:check": "tsx scripts/check-architecture.ts",
     "test": "vitest run",
     "types": "tsc --noEmit",

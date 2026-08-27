@@ -2,18 +2,6 @@
   "version": 1,
   "approvals": [
     {
-      "path": "docs/harness/SSOT.md",
-      "sha256": "7e8b5f7f6353fc98edfae719e6140af48ba2c13657fabeb84c630d7c04458d67",
-      "approvedBy": "osye1128",
-      "reason": "사람이 승인한 SSOT 및 보호 정책 변경"
-    },
-    {
-      "path": "package.json",
-      "sha256": "3526f296cb75e5f2a1d2dca500cf887ecd43f45c5adfbaa18fd8a8fc6ff26319",
-      "approvedBy": "osye1128",
-      "reason": "사람이 승인한 검증 명령 변경"
-    },
-    {
       "path": "scripts/check-architecture.ts",
       "sha256": "d08a322eddb2ee9a927d06af97f62a6d9f9a8243d41fceb01ac07f9fa5a9ef03",
       "approvedBy": "osye1128",
@@ -36,6 +24,18 @@
       "sha256": "a16faa80bf7ab9fe4647db0e148b6a29d2f00a25f5e47b9adb58c242fc3ad90a",
       "approvedBy": "osye1128",
       "reason": "사람이 승인한 전체 검증 흐름 변경"
+    },
+    {
+      "path": "docs/harness/SSOT.md",
+      "sha256": "3cf073b5ffa05793f0913a30afeddbb755288d3939f460ac86a7c6f38b02ab3d",
+      "approvedBy": "osye1128",
+      "reason": "보호 정책 및 검증 명령 변경을 명시적으로 승인"
+    },
+    {
+      "path": "package.json",
+      "sha256": "a02554963d3c4299ff4c10086c5ffcbf8be8ee29cfda5f57960f9daca0209f80",
+      "approvedBy": "osye1128",
+      "reason": "보호 정책 및 검증 명령 변경을 명시적으로 승인"
     }
   ]
 }

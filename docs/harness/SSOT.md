@@ -8,17 +8,17 @@
 
 ## 2. SSOT 매트릭스
 
-| 영역 | 원본(SSOT) | 현재 상태 | 원본이 결정하는 범위 |
-|---|---|---|---|
-| 재고 도메인 | [`docs/01-requirements.md`](../01-requirements.md) | 존재 | 재고 개념, 로트, 거점, FEFO/LEFO, 이동·사유·팝업·감사 규칙, 범위와 완료 기준 |
-| 아키텍처 | [`docs/06-architecture.md`](../06-architecture.md) | 존재 | 기술 스택, 데이터 모델, 계층·트랜잭션 경계, 재고 변경 통로, 상태 흐름, 성능·동시성 결정 |
-| 개별 작업 | 해당 [GitHub Issue](https://github.com/osye1128/inventory-harness-lab/issues) 및 [`maintenance.yml`](../../.github/ISSUE_TEMPLATE/maintenance.yml) | 현재 등록된 Issue 없음 | 작업 목적, 범위, 수용 조건, 의존성, 상태와 구현·검증 결과 |
-| 보호 경로 검사 | [`scripts/check-protected.ts`](../../scripts/check-protected.ts) | 구현됨 | 승인된 보호 경로 변경만 로컬·CI에서 통과 |
-| 검증 규칙 | [`02-verification.md`](./02-verification.md) | 구현됨 | 현재 하네스의 검증 절차와 단계별 규칙 |
-| 검증 실행 | [`scripts/verify.ts`](../../scripts/verify.ts) | 구현됨 | Protected → Prepare → Types → Lint → Architecture Check → Test → Build 실행 |
-| 구현·검증 루프 | [`02-verification.md`](./02-verification.md) | 구현됨 | 시도 원장, 검증 checkpoint, 세션 handoff, 사람 결정 기록 및 재개 규칙 |
+| 영역       | 원본(SSOT)                                                                                                                                        | 현재 상태           | 원본이 결정하는 범위                                                               |
+| -------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | --------------- | ------------------------------------------------------------------------- |
+| 재고 도메인   | [`docs/01-requirements.md`](../01-requirements.md)                                                                                              | 존재              | 재고 개념, 로트, 거점, FEFO/LEFO, 이동·사유·팝업·감사 규칙, 범위와 완료 기준                       |
+| 아키텍처     | [`docs/06-architecture.md`](../06-architecture.md)                                                                                              | 존재              | 기술 스택, 데이터 모델, 계층·트랜잭션 경계, 재고 변경 통로, 상태 흐름, 성능·동시성 결정                     |
+| 개별 작업    | 해당 [GitHub Issue](https://github.com/osye1128/inventory-harness-lab/issues) 및 [`maintenance.yml`](../../.github/ISSUE_TEMPLATE/maintenance.yml) | 현재 등록된 Issue 없음 | 작업 목적, 범위, 수용 조건, 의존성, 상태와 구현·검증 결과                                       |
+| 보호 경로 검사 | [`scripts/check-protected.ts`](../../scripts/check-protected.ts)                                                                                | 구현됨             | 승인된 보호 경로 변경만 로컬·CI에서 통과                                                  |
+| 검증 규칙    | [`02-verification.md`](./02-verification.md)                                                                                                    | 구현됨             | 검증 단계와 성공·실패 판정                                                           |
+| 검증 실행    | [`scripts/verify.ts`](../../scripts/verify.ts)                                                                                                  | 구현됨             | Protected → Prepare → Types → Lint → Architecture Check → Test → Build 실행 |
+| 구현·검증 루프 | [`03-loop.md`](./03-loop.md)                                                                                                                    | 구현됨             | 판정 이후 반복, 시도 상한, checkpoint, 세션 handoff, 사람 결정 및 재개 규칙                    |
 
-> **현재 원본이 없는 영역:** 구현·검증 루프는 아직 정의하지 않는다. 검증 절차의 원본은 [`02-verification.md`](./02-verification.md)이며, 이 문서는 해당 절차를 대체하지 않는다.
+> 검증 판정의 원본은 [`02-verification.md`](./02-verification.md)이며, 판정 이후 반복 절차의 원본은 [`03-loop.md`](./03-loop.md)다.
 
 ## 3. 문서 간 책임 경계
 
@@ -68,7 +68,7 @@ Harness 문서는 충돌을 임의로 해결하지 않는다. 사람의 판단�
 ### 승인 방법
 
 - 보호 경로 변경은 [`scripts/check-protected.ts`](../../scripts/check-protected.ts)가 로컬과 CI에서 검사한다.
-- 사람이 승인할 때는 [`.harness/protected-approvals.json`](../../.harness/protected-approvals.json)의 `approvals` 배열에 변경된 경로의 현재 `sha256`, `approvedBy`, `reason`을 기록한다.
+- 사람은 로컬에서 `npm run verify:approve -- --scope <path> --approved-by <사람> --reason <사유>`를 명시적으로 실행해 현재 변경 범위와 해시를 확인한 뒤 [`.harness/protected-approvals.json`](../../.harness/protected-approvals.json)을 갱신한다.
 - 검사기는 현재 변경 경로와 파일의 LF 정규화된 UTF-8 내용에 대한 SHA-256 및 승인 기록을 대조한다. 승인 기록이 없거나 값이 다르면 `PROTECTED_CHANGE_NEEDS_HUMAN` 상태로 실패한다.
 - 승인 파일은 사람이 명시적으로 갱신하며, AI가 승인자를 대신해 기록하지 않는다.
 - 로컬과 CI는 같은 승인 파일과 같은 검사 명령을 사용한다. CI에서는 `GITHUB_BASE_SHA` 또는 `GITHUB_BASE_REF`를 비교 기준으로 사용하고, 로컬에서는 `PROTECTED_BASE`를 지정할 수 있으며 기본값은 `HEAD`다.
@@ -88,7 +88,7 @@ Harness 문서는 충돌을 임의로 해결하지 않는다. 사람의 판단�
 - Pull Request는 구현 결과를 전달하는 수단이며, 개별 작업의 원본인 Issue를 대체하지 않는다.
 - 현재 저장소에는 등록된 Issue가 없으므로 이 문서에 임의의 작업·번호·제목을 추가하지 않는다.
 
-## 7. 추후 생성 항목
+## 7. 검증·반복 원본
 
 ### 검증 규칙
 

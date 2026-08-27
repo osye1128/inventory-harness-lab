@@ -58,8 +58,10 @@ CI에서는 [`../.github/workflows/verify.yml`](../../.github/workflows/verify.y
 보호 경로에 변경이 있으면 현재 파일의 LF 정규화 UTF-8 내용 SHA-256을 승인 파일과 비교한다.
 
 - 승인 기록: [`.harness/protected-approvals.json`](../../.harness/protected-approvals.json)
+- 사람이 로컬에서 명시적으로 실행하는 승인 명령: `npm run verify:approve -- --scope <path> --reason <사유>` (`approvedBy` 기본값: `osye1128`) 또는 다른 승인자가 필요한 경우 `--approved-by <사람>` 추가
 - 승인 필드: `path`, `sha256`, `approvedBy`, `reason`
-- 승인 기록이 없거나 해시가 다르면 `PROTECTED_CHANGE_NEEDS_HUMAN`으로 실패
+- `--scope`는 현재 보호 경로 변경과 정확히 일치해야 하며, 승인 기록이 없거나 해시가 다르면 `PROTECTED_CHANGE_NEEDS_HUMAN`으로 실패
+- 승인 명령은 CI에서 실행할 수 없고, PR 생성·CI 성공·AI 실행은 승인으로 간주하지 않는다.
 - 승인 파일 자체는 자기참조 해시 문제를 피하기 위해 보호 경로 목록에서 제외
 - 승인 파일 변경은 [`.github/CODEOWNERS`](../../.github/CODEOWNERS)와 GitHub branch protection 또는 ruleset으로 사람 review를 요구
 
@@ -186,23 +188,21 @@ PR에서는 PR base SHA를 Protected 비교 기준으로 사용하고, `main` pu
 
 ## 7. 실패 처리
 
-| 상태 | 의미 | 조치 |
-|---|---|---|
-| `PROTECTED_CHANGE_NEEDS_HUMAN` | 보호 경로 변경에 승인 기록이 없거나 해시가 불일치 | 사람이 승인 내용을 검토하고 승인 파일을 갱신한 뒤 재실행 |
-| `NEEDS_HUMAN` | SSOT·Issue·SSOT 간 충돌 또는 판단 불가 | AI가 임의로 진행하지 않고 사람의 판단을 요청 |
-| Types/Lint/Architecture Check/Test/Build 실패 | 해당 기술 검증 단계 실패 | 오류를 수정한 뒤 전체 검증 재실행 |
+| 상태                                          | 의미                            | 조치                               |
+| ------------------------------------------- | ----------------------------- | -------------------------------- |
+| `PROTECTED_CHANGE_NEEDS_HUMAN`              | 보호 경로 변경에 승인 기록이 없거나 해시가 불일치  | 사람이 승인 내용을 검토하고 승인 파일을 갱신한 뒤 재실행 |
+| `NEEDS_HUMAN`                               | SSOT·Issue·SSOT 간 충돌 또는 판단 불가 | AI가 임의로 진행하지 않고 사람의 판단을 요청       |
+| Types/Lint/Architecture Check/Test/Build 실패 | 해당 기술 검증 단계 실패                | 오류를 수정한 뒤 전체 검증 재실행              |
 
 실패 원인을 숨기거나 승인 단계를 우회하지 않는다.
 
-## 8. 표준 구현·검증 루프
+## 8. 반복 절차 연결
 
-Issue 작업은 `npm run harness:run -- start <Issue 번호>`로 시도를 시작하고, `checkpoint`, `finish`, `handoff`, `decision` 이벤트를 `.harness/ledger.jsonl`에 남긴다. 원장은 세션·에이전트가 바뀌어도 유지되며 `npm run harness:check`가 시도 상한과 이벤트 순서를 검증한다. 시도 상한에 도달하면 추가 수정 없이 `NEEDS_HUMAN`으로 중단한다.
-
-각 검증 단계는 checkpoint로 기록하고, 실패·중단 시에도 마지막 단계와 다음 행동을 handoff 이벤트로 남긴다. 새 세션은 원장을 먼저 재생해 현재 시도·마지막 checkpoint·남은 횟수·미해결 결정을 확인한다. 브랜치나 커밋이 원장과 다르면 자동 재개하지 않는다.
-
-사람의 판단이 필요한 충돌은 `decision` 이벤트에 질문·선택지·결정·결정자·근거·적용 범위를 기록한 뒤에만 재개한다. AI와 CI는 사람 결정을 대신 기록하지 않는다.
+검증 결과에 따른 수정·재검증·시도 상한·세션 handoff·사람 결정 절차는 [`03-loop.md`](./03-loop.md)를 따른다. 이 문서는 검증 판정 자체를 정의하며, 판정 이후의 행동을 중복해서 정의하지 않는다.
 
 ## 9. Issue 처리
+
+Issue 종료 조건과 반복 실행을 연결할 때는 [`03-loop.md`](./03-loop.md)의 상태·시도·재개 규칙을 함께 적용한다.
 
 개별 작업의 원본은 해당 GitHub Issue다. 이 문서는 Issue의 내용을 대신 정의하지 않고, Issue에 적힌 종료 조건을 검증 하네스와 연결하는 방법을 안내한다.
 
