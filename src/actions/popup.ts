@@ -5,7 +5,8 @@ import { db } from '@/lib/db'
 import { requireUser, SessionExpiredError } from '@/lib/auth'
 import { applyMovement, InsufficientStockError } from '@/lib/stock'
 import { ALLOCATION, allocateLots } from '@/lib/fefo'
-import { settlePopupTx, unsettlePopupTx } from '@/lib/popup'
+import { isPopupExpired, settlePopupTx, unsettlePopupTx } from '@/lib/popup'
+import { today } from '@/lib/date'
 import { LOCATION_TYPES, MOVEMENT_TYPES, POPUP_STATUS } from '@/lib/constants'
 import { dateOnly } from '@/lib/date'
 import type { SaveResult } from './inbound'
@@ -82,7 +83,8 @@ export async function shipOutPopup(input: {
 
   const popup = await db.popup.findUnique({ where: { id: input.popupId } })
   if (!popup) return { ok: false, error: '팝업을 찾을 수 없습니다' }
-  if (popup.status === POPUP_STATUS.CLOSED) return { ok: false, error: '정산이 끝난 팝업입니다' }
+  if (popup.status === POPUP_STATUS.CLOSED || isPopupExpired(popup.endDate, today()))
+    return { ok: false, error: '기간이 끝난 팝업입니다' }
 
   const lines = input.lines.filter((l) => l.quantity > 0)
   if (!lines.length) return { ok: false, error: '반출할 수량을 입력하세요' }

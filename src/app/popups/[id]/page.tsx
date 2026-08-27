@@ -6,7 +6,8 @@ import { PopupReport } from '@/components/PopupReport'
 import { UnsettleButton } from '@/components/UnsettleButton'
 import { getPopupDetail, popupPeriod, popupReport } from '@/lib/popup'
 import { POPUP_STATUS, POPUP_STATUS_LABEL, type PopupStatus } from '@/lib/constants'
-import { formatDate } from '@/lib/date'
+import { formatDate, today } from '@/lib/date'
+import { isPopupExpired } from '@/lib/popup'
 
 export const dynamic = 'force-dynamic'
 
@@ -18,6 +19,8 @@ export default async function PopupDetailPage({ params }: { params: Promise<{ id
   const { popup, totals, byProduct, popupLots, sourceLots, products } = detail
   const status = popup.status as PopupStatus
   const closed = status === POPUP_STATUS.CLOSED
+  const expired = isPopupExpired(popup.endDate, today())
+  const inactive = closed || expired
   const onHand = popupLots.reduce((s, l) => s + l.quantity, 0)
 
   const header = (
@@ -26,8 +29,8 @@ export default async function PopupDetailPage({ params }: { params: Promise<{ id
         <Link href="/popups" className="text-[14.5px] font-extrabold">
           ‹ {popup.name}
         </Link>
-        <Badge tone={closed ? 'gray' : status === POPUP_STATUS.PREP ? 'amber' : 'acc'}>
-          {POPUP_STATUS_LABEL[status]}
+        <Badge tone={inactive ? 'gray' : status === POPUP_STATUS.PREP ? 'amber' : 'acc'}>
+          {expired ? '기간 종료' : POPUP_STATUS_LABEL[status]}
         </Badge>
       </header>
       <p className="border-b border-line bg-dim px-4 py-2.5 text-[11.5px] text-[#5b5570] tnum">
