@@ -1,7 +1,7 @@
 import type { Prisma } from '@/generated/prisma/client'
 import { db } from './db'
 import { applyMovement, reverseMovement } from './stock'
-import { MOVEMENT_TYPES, POPUP_STATUS, REASON_CODES } from './constants'
+import { MOVEMENT_TYPES, POPUP_STATUS, REASON_CODES, type PopupStatus } from './constants'
 import { dateOnly, today } from './date'
 
 /**
@@ -52,6 +52,12 @@ export function isPopupExpired(endDate: Date, asOf: Date): boolean {
   return dateOnly(endDate).getTime() < dateOnly(asOf).getTime()
 }
 
+/** 만료됐지만 아직 정산하지 않은 팝업은 진행 중이 아니라 정산 중으로 표시한다. */
+export function popupDisplayStatus(status: PopupStatus, endDate: Date, asOf: Date = today()): PopupStatus {
+  if (status === POPUP_STATUS.CLOSED) return POPUP_STATUS.CLOSED
+  return isPopupExpired(endDate, asOf) ? POPUP_STATUS.SETTLING : status
+}
+
 export async function getPopupList(asOf: Date = today()) {
   const popups = await db.popup.findMany({
     include: { location: { include: { lots: { where: { quantity: { gt: 0 } } } } }, movements: true },
@@ -62,6 +68,7 @@ export async function getPopupList(asOf: Date = today()) {
     id: p.id,
     name: p.name,
     status: p.status,
+    displayStatus: popupDisplayStatus(p.status as PopupStatus, p.endDate, asOf),
     expired: isPopupExpired(p.endDate, asOf),
     startDate: p.startDate,
     endDate: p.endDate,
