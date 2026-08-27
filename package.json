@@ -8,7 +8,6 @@
     "start": "next start",
     "lint": "eslint",
     "protected": "tsx scripts/check-protected.ts",
-    "protected:github": "tsx scripts/check-github-approval.ts",
     "architecture:check": "tsx scripts/check-architecture.ts",
     "test": "vitest run",
     "types": "tsc --noEmit",
