@@ -2,7 +2,7 @@ import type { Prisma } from '@/generated/prisma/client'
 import { db } from './db'
 import { applyMovement, reverseMovement } from './stock'
 import { MOVEMENT_TYPES, POPUP_STATUS, REASON_CODES } from './constants'
-import { dateOnly } from './date'
+import { dateOnly, today } from './date'
 
 /**
  * 팝업 = 여러 번 재고가 들어갔다가 마지막에 한 번 정산되는 임시 거점.
@@ -47,7 +47,12 @@ export function tallyPopup(movements: MovementLike[], popupLocationId: number): 
 
 // ───────────────────────── 조회
 
-export async function getPopupList() {
+/** 종료일 당일은 유효하며, 다음 날부터 팝업이 만료된다. */
+export function isPopupExpired(endDate: Date, asOf: Date): boolean {
+  return dateOnly(endDate).getTime() < dateOnly(asOf).getTime()
+}
+
+export async function getPopupList(asOf: Date = today()) {
   const popups = await db.popup.findMany({
     include: { location: { include: { lots: { where: { quantity: { gt: 0 } } } } }, movements: true },
     orderBy: [{ status: 'asc' }, { startDate: 'desc' }],
@@ -57,6 +62,7 @@ export async function getPopupList() {
     id: p.id,
     name: p.name,
     status: p.status,
+    expired: isPopupExpired(p.endDate, asOf),
     startDate: p.startDate,
     endDate: p.endDate,
     onHand: p.location.lots.reduce((s, l) => s + l.quantity, 0),
@@ -201,6 +207,7 @@ export async function settlePopupTx(tx: Prisma.TransactionClient, input: SettleI
   const popup = await tx.popup.findUnique({ where: { id: input.popupId } })
   if (!popup) throw new Error('팝업을 찾을 수 없습니다')
   if (popup.status === POPUP_STATUS.CLOSED) throw new Error('이미 정산된 팝업입니다')
+  if (isPopupExpired(popup.endDate, today())) throw new Error('기간이 끝난 팝업입니다')
 
   const lots = await tx.lot.findMany({
     where: { locationId: popup.locationId, quantity: { gt: 0 } },
