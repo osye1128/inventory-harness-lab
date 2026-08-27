@@ -1,6 +1,6 @@
 ---
 name: handle-issue
-description: This skill should be used when explicitly invoked to process a GitHub Issue end to end: create an Issue branch, implement the requested change, run the repository's local verification, comment the results on the Issue, commit, push, and open a pull request. Use it for `/handle-issue <issue-number-or-url>` and explicit requests such as “이슈 처리해줘 #42”.
+description: "This skill should be used when explicitly invoked to process a GitHub Issue end to end: create an Issue branch, implement the requested change, run the repository's local verification, comment the results on the Issue, commit, push, and open a pull request. Use it for `/handle-issue <issue-number-or-url>` and explicit requests such as '이슈 처리해줘 #42'."
 argument-hint: <issue-number-or-url>
 disable-model-invocation: true
 ---
