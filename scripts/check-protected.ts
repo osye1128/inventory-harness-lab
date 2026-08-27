@@ -78,7 +78,13 @@ const missing = changedProtected.filter((filePath) => {
   return !approvals.some((approval) => approval.path === filePath && approval.sha256 === currentHash)
 })
 if (missing.length > 0) {
-  console.error('PROTECTED_CHANGE_NEEDS_HUMAN: 승인되지 않은 보호 경로 변경입니다.')
+  const reasonCode = missing.some((filePath) => {
+    const currentHash = digest(filePath)
+    return approvals.some((approval) => approval.path === filePath) && !approvals.some((approval) => approval.path === filePath && approval.sha256 === currentHash)
+  })
+    ? 'PROTECTED_APPROVAL_HASH_MISMATCH'
+    : 'PROTECTED_APPROVAL_MISSING'
+  console.error(`outcome=BLOCKED reasonCode=${reasonCode}: 승인되지 않은 보호 경로 변경입니다.`)
   console.error(`비교 기준: ${base}`)
   for (const filePath of missing) console.error(`- ${filePath} (sha256: ${digest(filePath)})`)
   console.error('사람이 npm run verify:approve -- --scope <path> --reason <사유>를 실행한 뒤 다시 실행하세요.')

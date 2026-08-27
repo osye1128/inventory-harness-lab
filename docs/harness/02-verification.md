@@ -2,7 +2,7 @@
 
 > 작성일: 2026-08-26 · 상태: 검증 판정 원본 · 원본: 이 문서
 
-이 문서는 검증 규칙의 원본이다. `SSOT.md`는 원본 위치와 책임을 등록하고, 판정 이후의 반복 절차는 [`03-loop.md`](./03-loop.md)가 담당한다.
+이 문서는 검증 단계와 기계 판정의 원본이다. `SSOT.md`는 이 문서의 위치와 책임을 등록하며, 판정 이후의 workflow 상태·반복·사람 결정은 [`03-loop.md`](./03-loop.md)가 담당한다. 이 문서는 검증 결과만 반환하고 `NEEDS_HUMAN`이나 재시도 여부를 직접 결정하지 않는다.
 
 ## 1. 목적
 
@@ -49,7 +49,7 @@ cp .env.example .env
 
 `npm run verify`는 검증 전용 DB를 자체 생성하므로 기존 `prisma/dev.db`를 사용하거나 삭제하지 않는다. `DATABASE_URL`은 각 하위 단계에 검증 전용 임시 DB URL로 전달된다.
 
-CI에서는 [`../../.github/workflows/verify.yml`](../../.github/workflows/verify.yml)이 `npm ci` 후 `npm run verify`를 실행한다. workflow는 실제 운영 비밀을 사용하지 않고 CI 전용 `SESSION_SECRET`만 제공한다.
+CI에서는 [`../../.github/workflows/verify.yml`](../../.github/workflows/verify.yml)이 `npm ci` 후 `npm run verify`를 실행한다. workflow는 실제 운영 비밀을 사용하지 않고 CI 전용 `SESSION_SECRET`만 제공한다. 로컬에는 CI와 동일한 Node/npm 버전·base SHA·환경을 자동으로 주입하는 `verify:ci` 명령이 아직 없으므로, “로컬 CI 재현”은 제안된 개선 흐름이며 현재 검증 단계가 아니다.
 
 ## 4. 단계별 동작
 
@@ -62,8 +62,9 @@ CI에서는 [`../../.github/workflows/verify.yml`](../../.github/workflows/verif
 - 승인 기록: [`.harness/protected-approvals.json`](../../.harness/protected-approvals.json)
 - 사람이 로컬에서 명시적으로 실행하는 승인 명령: `npm run verify:approve -- --scope <path> --reason <사유>` (`approvedBy` 기본값: `osye1128`) 또는 다른 승인자가 필요한 경우 `--approved-by <사람>` 추가
 - 승인 필드: `path`, `sha256`, `approvedBy`, `reason`
-- `--scope`는 현재 보호 경로 변경과 정확히 일치해야 하며, 승인 기록이 없거나 해시가 다르면 `outcome=BLOCKED`, `reasonCode=PROTECTED_APPROVAL_MISSING` 또는 `PROTECTED_APPROVAL_HASH_MISMATCH`로 반환한다. workflow 상태 전환은 [`03-loop.md`](./03-loop.md)가 담당한다.
+- `--scope`는 현재 보호 경로 변경과 정확히 일치해야 하며, 승인 기록이 없으면 `outcome=BLOCKED`, `reasonCode=PROTECTED_APPROVAL_MISSING`, 해시가 다르면 `outcome=BLOCKED`, `reasonCode=PROTECTED_APPROVAL_HASH_MISMATCH`로 반환한다. workflow 상태 전환은 [`03-loop.md`](./03-loop.md)가 담당한다.
 - 승인 명령은 CI에서 실행할 수 없고, PR 생성·CI 성공·AI 실행은 승인으로 간주하지 않는다.
+- 로컬·PR CI·`main` push CI는 모두 같은 승인 대조를 수행한다. CI는 비교 base만 이벤트에 따라 선택하며 보호 검사를 우회하지 않는다.
 - 승인 파일 자체는 자기참조 해시 문제를 피하기 위해 보호 경로 목록에서 제외
 - 승인 파일 변경은 [`.github/CODEOWNERS`](../../.github/CODEOWNERS)와 GitHub branch protection 또는 ruleset으로 사람 review를 요구
 
@@ -76,7 +77,16 @@ CI에서는 [`../../.github/workflows/verify.yml`](../../.github/workflows/verif
 3. `GITHUB_BASE_REF`
 4. 로컬 기본값 `HEAD`
 
-보호 경로 충돌이나 승인 의미가 불명확한 경우에는 [`SSOT.md`](./SSOT.md)의 `NEEDS_HUMAN` 정책을 따른다. AI와 CI는 승인 기록을 생성하지 않으며, PR 이벤트나 CI 환경 변수는 보호 경로 승인 예외가 아니다. 로컬과 CI는 동일한 승인 검사를 수행한다.
+보호 경로 충돌이나 승인 의미가 불명확한 경우에는 `outcome=BLOCKED`, `reasonCode=PROTECTED_APPROVAL_SCOPE_AMBIGUOUS`로 판정하고 [`SSOT.md`](./SSOT.md)의 `NEEDS_HUMAN` 정책을 따른다. AI와 CI는 승인 기록을 생성하지 않으며, PR 이벤트나 CI 환경 변수는 보호 경로 승인 예외가 아니다. 로컬과 CI는 동일한 승인 검사를 수행한다.
+
+검증 결과는 다음 개념적 형식으로 기록한다.
+
+```text
+{ outcome: PASS | FAIL | BLOCKED | NOT_RUN | INTERRUPTED,
+  reasonCode, stage, exitCode, details }
+```
+
+`PASS`는 모든 기계 단계를 통과했다는 뜻이며 사람 리뷰·승인·머지 또는 `COMPLETED`를 의미하지 않는다. PR의 최신 HEAD CI가 `PASS`이고 PR이 열린 상태일 때만 `READY_FOR_REVIEW`의 기계 조건을 만족한다. PR lifecycle의 review·merge·rework 및 다음 실행 진입은 [`03-loop.md`](./03-loop.md)가 담당하며, 일반 댓글은 자동 trigger가 아니고 `repository_dispatch`만 재진입을 시작한다.
 
 ### 4.2 Prepare
 
@@ -135,6 +145,9 @@ vitest run
 - `tests/fefo.test.ts`
 - `tests/stock-invariant.test.ts`
 - `tests/popup-settle.test.ts`
+- `tests/issues/issue-6-popup-expiration.test.ts`
+
+Issue 전용 테스트는 실제 GitHub Issue의 번호와 종료 조건을 확인한 경우에만 완료 증거로 사용한다. 현재 저장소의 Issue 전용 파일은 Vitest 대상에는 포함되지만, Issue 원본 확인과 종료 조건 매핑은 별도 절차다.
 
 Vitest는 Node 환경에서 실행되며 `tests/**/*.test.ts`를 대상으로 한다. `npm run verify`에서는 Prepare가 전달한 검증 전용 `DATABASE_URL`을 테스트 프로세스가 사용한다.
 
@@ -194,9 +207,11 @@ PR에서는 PR base SHA를 Protected 비교 기준으로 사용하고, `main` pu
 
 | 상태                                          | 의미                            | 조치                               |
 | ------------------------------------------- | ----------------------------- | -------------------------------- |
-| `BLOCKED / PROTECTED_APPROVAL_*`            | 보호 경로 승인 기록이 없거나 해시가 불일치          | 판정을 03-loop에 전달하고 사람 승인 후 재실행 |
-| `BLOCKED / *_CONFLICT`                      | 원본 충돌 또는 판단 불가                            | 판정을 03-loop에 전달하고 상태 전환은 03-loop가 결정 |
-| Types/Lint/Architecture Check/Test/Build 실패 | 해당 기술 검증 단계 실패                | 오류를 수정한 뒤 전체 검증 재실행              |
+| `BLOCKED / PROTECTED_APPROVAL_MISSING` 또는 `PROTECTED_APPROVAL_HASH_MISMATCH` | 보호 경로 승인 기록이 없거나 해시가 불일치 | 판정을 03-loop에 전달하고 사람 승인 후 같은 범위 재검증 |
+| `BLOCKED / *_CONFLICT`, `PROTECTED_APPROVAL_SCOPE_AMBIGUOUS` | 원본 충돌 또는 승인 범위 판단 불가 | 판정을 03-loop에 전달하고 상태 전환은 03-loop가 결정 |
+| `BLOCKED / ACCEPTANCE_CRITERIA_AMBIGUOUS` | Issue 종료 조건 해석 불가 | 판정을 03-loop에 전달하고 사람 결정 전 중단 |
+| `FAIL / PREPARE_FAILED`, `TYPES_FAILED`, `LINT_FAILED`, `ARCHITECTURE_CHECK_FAILED`, `TEST_FAILED`, `BUILD_FAILED` | 해당 기술 검증 단계 실패 | 결과를 03-loop에 전달하고 재시도 여부는 loop가 결정 |
+| `INTERRUPTED / INTERRUPTED` | 세션·프로세스·runner 중단 | 성공·실패로 추정하지 않고 checkpoint와 handoff 기록 |
 
 실패 원인을 숨기거나 승인 단계를 우회하지 않는다.
 
@@ -263,7 +278,7 @@ describe('Issue #42: 재고 이동', () => {
 
 ### Issue 테스트 미충족 시
 
-Issue 번호가 없거나 테스트 파일이 없으면 `NEEDS_HUMAN`으로 처리한다. 테스트 파일이 있어도 종료 조건 중 하나라도 assertion으로 검증하지 못하면 해당 Issue는 완료할 수 없다.
+Issue 번호가 없으면 `outcome=BLOCKED`, `reasonCode=ISSUE_MISSING`으로 처리하고, 테스트 파일이 없으면 `outcome=BLOCKED`, `reasonCode=ISSUE_TEST_MISSING`으로 처리한다. 파일명이 Issue와 맞지 않으면 `ISSUE_TEST_MISMATCH`, 종료 조건 중 하나라도 assertion으로 검증하지 못하면 `ISSUE_ACCEPTANCE_CRITERIA_UNCOVERED`로 판정한다. 이 결과를 workflow 상태(`NEEDS_HUMAN` 또는 남은 시도에서의 보완)로 바꾸는 책임은 [`03-loop.md`](./03-loop.md)에 있다.
 
 ### Issue 테스트 실행
 

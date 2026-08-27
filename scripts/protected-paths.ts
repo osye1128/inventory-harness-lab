@@ -6,6 +6,7 @@ export const PROTECTED_PATHS = [
   'docs/harness/02-verification.md',
   'docs/harness/03-loop.md',
   '.github/workflows/verify.yml',
+  '.github/workflows/harness.yml',
   '.github/CODEOWNERS',
   '.github/ISSUE_TEMPLATE/maintenance.yml',
   'package.json',
@@ -18,6 +19,8 @@ export const PROTECTED_PATHS = [
   'scripts/issue-run.ts',
   'scripts/check-ledger.ts',
   'scripts/protected-paths.ts',
+  'scripts/github-events.ts',
+  'scripts/process-repository-dispatch.ts',
 ] as const
 
 export const PROTECTED_PATH_SET = new Set<string>(PROTECTED_PATHS)
